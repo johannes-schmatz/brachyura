@@ -1,2 +1,20 @@
 /testprogram/netbeans/NetbeansProject/nbproject/private/
 /testmod/netbeans/NetbeansProject/nbproject/private/
+
+# output directories
+build
+access-widener/build/libs
+bootstrap/build/libs
+brachyura/build/libs
+brachyura-mixin-compile-extensions/build/libs
+fabricmerge/build/libs
+fernutil/build/libs
+trieharder/build/libs
+
+# Bootstrap dependencies
+.buildscript/deps/*
+
+# ide configs
+.idea
+*.iml
+
