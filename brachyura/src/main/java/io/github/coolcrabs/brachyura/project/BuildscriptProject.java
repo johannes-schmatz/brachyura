@@ -4,16 +4,12 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.Nullable;
 import org.tinylog.Logger;
 
 import io.github.coolcrabs.brachyura.compiler.java.CompilationFailedException;
@@ -45,8 +41,8 @@ class BuildscriptProject extends BaseJavaProject {
     @Override
     public IdeModule[] getIdeModules() {
         Tasks t = new Tasks();
-        Optional<Project> o = project.get();
-        if (o.isPresent()) o.get().getTasks(t);
+        Project p = project.get();
+        if (p != null) p.getTasks(t);
         ArrayList<RunConfigBuilder> runConfigs = new ArrayList<>(t.t.size());
         Path cwd = getProjectDir().resolve("run");
         PathUtil.createDirectories(cwd);
@@ -77,23 +73,23 @@ class BuildscriptProject extends BaseJavaProject {
         };
     }
 
-    public final Lazy<Optional<Project>> project = new Lazy<>(this::createProject);
-    @SuppressWarnings("all")
-    public Optional<Project> createProject() {
+    public final Lazy<Project> project = new Lazy<>(this::createProject);
+    @Nullable
+    public Project createProject() {
         try {
             ClassLoader b = getBuildscriptClassLoader();
-            if (b == null) return Optional.empty();
-            Class projectclass = Class.forName("Buildscript", true, b);
+            if (b == null) return null;
+            Class<?> projectclass = Class.forName("Buildscript", true, b);
             if (Project.class.isAssignableFrom(projectclass)) {
-                return Optional.of((Project) projectclass.getDeclaredConstructor().newInstance());
+                return (Project) projectclass.getDeclaredConstructor().newInstance();
             } else {
                 Logger.warn("Buildscript must be instance of Project");
-                return Optional.empty();
+                return null;
             }
         } catch (Exception e) {
             Logger.warn("Error getting project:");
             Logger.warn(e);
-            return Optional.empty();
+            return null;
         }
     }
 

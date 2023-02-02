@@ -30,9 +30,9 @@ public class MavenPublishing {
     private MavenPublishing() { }
     
     public static class AuthenticatedMaven {
-        final String mavenUrl;
-        final String username;
-        final String password;
+        public final String mavenUrl;
+        public final String username;
+        public final String password;
         
         public AuthenticatedMaven(String mavenUrl, @Nullable String username, @Nullable String password) {
             Objects.requireNonNull(mavenUrl, "Unset maven url");
@@ -57,8 +57,6 @@ public class MavenPublishing {
     
     /**
      * Publishes to a maven with a stub pom
-     * @param maven
-     * @param dep
      */
     public static void publish(AuthenticatedMaven maven, JavaJarDependency dep) {
         publish(maven, dep, stubPom(dep.mavenId));
@@ -66,9 +64,6 @@ public class MavenPublishing {
     
     /**
      * Publish to a maven
-     * @param maven
-     * @param dep
-     * @param pom
      */
     public static void publish(AuthenticatedMaven maven, JavaJarDependency dep, Supplier<InputStream> pom) {
         Objects.requireNonNull(pom, "null pom");
@@ -133,13 +128,13 @@ public class MavenPublishing {
         }
     }
     
-    static String getMavenPath(MavenId id, String ext) {
+    public static String getMavenPath(MavenId id, String ext) {
         return id.groupId.replace('.', '/') + "/" + id.artifactId + "/" + id.version + "/" + id.artifactId + "-" + id.version + ext;
     }
     
     public static class MavenPublishFile {
-        final String fileName;
-        final Supplier<InputStream> in;
+        public final String fileName;
+        public final Supplier<InputStream> in;
         
         public MavenPublishFile(String fileName, Supplier<InputStream> in) {
             this.fileName = fileName;

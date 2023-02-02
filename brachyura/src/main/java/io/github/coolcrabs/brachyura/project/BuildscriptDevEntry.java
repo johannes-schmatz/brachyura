@@ -22,15 +22,15 @@ class BuildscriptDevEntry {
             Project buildscript = (Project) Class.forName("Buildscript").getDeclaredConstructor().newInstance();
             BuildscriptProject buildscriptProject = new BuildscriptProject() {
                 @Override
-                public Optional<Project> createProject() {
-                    return Optional.of(buildscript);
+                public Project createProject() {
+                    return buildscript;
                 }
             };
             buildscript.setIdeProject(buildscriptProject);
             Tasks t = new Tasks();
             buildscript.getTasks(t);
             Task task = t.get(args[2]);
-            task.doTask(new String[]{});
+            task.doTask(new String[0]);
         } finally {
             for (Plugin plugin : plugins) {
                 plugin.onExit();

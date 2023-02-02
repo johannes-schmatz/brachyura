@@ -29,20 +29,19 @@ public class BrachyuraEntry {
                 buildscriptProject.getTasks(t);
                 if (args.length >= 2) {
                     Task task = t.get(args[1]);
-                    task.doTask(args.length > 3 ? Arrays.copyOfRange(args, 2, args.length) : new String[]{});
+                    task.doTask(args.length >= 3 ? Arrays.copyOfRange(args, 2, args.length) : new String[0]);
                 } else {
                     Logger.info("Available buildscript tasks: {}", t);
                 }
             } else {
-                Optional<Project> o = buildscriptProject.project.get();
-                if (o.isPresent()) {
-                    Project project = o.get();
+                Project project = buildscriptProject.project.get();
+                if (project != null) {
                     project.setIdeProject(buildscriptProject);
                     Tasks t = new Tasks();
                     project.getTasks(t);
                     if (args.length >= 1) {
                         Task task = t.get(args[0]);
-                        task.doTask(args.length > 2 ? Arrays.copyOfRange(args, 1, args.length) : new String[]{});
+                        task.doTask(args.length >= 2 ? Arrays.copyOfRange(args, 1, args.length) : new String[0]);
                     } else {
                         Logger.info("Available tasks: {}", t);
                     }

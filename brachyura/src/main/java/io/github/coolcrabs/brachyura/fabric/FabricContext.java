@@ -343,9 +343,6 @@ public abstract class FabricContext {
     }
 
     public final Lazy<List<ModDependency>> remappedModDependencies = new Lazy<>(this::createRemappedModDependencies);
-    /**
-     * 🍝
-     */
     protected List<ModDependency> createRemappedModDependencies() {
         class RemapInfo {
             ModDependency source;

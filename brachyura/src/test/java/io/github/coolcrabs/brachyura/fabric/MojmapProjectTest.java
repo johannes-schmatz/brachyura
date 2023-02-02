@@ -8,8 +8,6 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 import io.github.coolcrabs.brachyura.decompiler.BrachyuraDecompiler;
-import io.github.coolcrabs.brachyura.decompiler.cfr.CfrDecompiler;
-import io.github.coolcrabs.brachyura.decompiler.fernflower.FernflowerDecompiler;
 import io.github.coolcrabs.brachyura.fabric.FabricContext.ModDependencyCollector;
 import io.github.coolcrabs.brachyura.fabric.FabricContext.ModDependencyFlag;
 import io.github.coolcrabs.brachyura.maven.Maven;
@@ -76,11 +74,11 @@ class MojmapProjectTest {
     @Test
     void ide() {
         long a = System.currentTimeMillis();
-        //Todo better api for this?
+        // Todo better api for this?
         fabricProject.getTasks(p -> {
-            if (p.name.equals("netbeans")) p.doTask(new String[]{});
-            if (p.name.equals("idea")) p.doTask(new String[]{});
-            if (p.name.equals("jdt")) p.doTask(new String[]{});
+            if (p.getName().equals("netbeans")) p.doTask(new String[]{});
+            if (p.getName().equals("idea")) p.doTask(new String[]{});
+            if (p.getName().equals("jdt")) p.doTask(new String[]{});
         });
         long b = System.currentTimeMillis();
         System.out.println(b - a);

@@ -5,29 +5,40 @@ import java.util.function.Consumer;
 
 import io.github.coolcrabs.brachyura.exception.TaskFailedException;
 
-public abstract class Task {
-    public final String name;
+public interface Task {
 
-    Task(String name) {
-        this.name = name;
-    }
-
-    public static Task of(String name, BooleanSupplier run) {
+    static Task of(String name, BooleanSupplier run) {
         return new FailableNoArgTask(name, run);
     }
 
-    public static Task of(String name, Runnable run) {
+    static Task of(String name, Runnable run) {
         return new NoArgTask(name, run);
     }
 
-    public static Task of(String name, Consumer<String[]> run) {
+    static Task of(String name, Consumer<String[]> run) {
         return new TaskWithArgs(name, run);
     }
 
-    public abstract void doTask(String[] args);
 
-    static class FailableNoArgTask extends Task {
-        final BooleanSupplier runnable;
+    void doTask(String[] args);
+
+    String getName();
+
+    abstract class AbstractTask implements Task {
+        public final String name;
+
+        public AbstractTask(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+    }
+
+    class FailableNoArgTask extends AbstractTask {
+        public final BooleanSupplier runnable;
 
         FailableNoArgTask(String name, BooleanSupplier runnable) {
             super(name);
@@ -40,8 +51,8 @@ public abstract class Task {
         }
     }
 
-    static class NoArgTask extends Task {
-        final Runnable runnable;
+    class NoArgTask extends AbstractTask {
+        public final Runnable runnable;
 
         NoArgTask(String name, Runnable runnable) {
             super(name);
@@ -54,8 +65,8 @@ public abstract class Task {
         }
     }
 
-    static class TaskWithArgs extends Task {
-        final Consumer<String[]> task;
+    class TaskWithArgs extends AbstractTask {
+        public final Consumer<String[]> task;
 
         TaskWithArgs(String name, Consumer<String[]> task) {
             super(name);
