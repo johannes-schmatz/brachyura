@@ -260,10 +260,11 @@ public class Minecraft {
     }
 
     private static void downloadAssets0(Path assetsIndexPath) throws IOException {
-        AssetsIndex assetsIndex = null;
+        AssetsIndex assetsIndex;
         try (BufferedReader reader = Files.newBufferedReader(assetsIndexPath)) {
             assetsIndex = new Gson().fromJson(reader, AssetsIndex.class);
         }
+
         Path objects = assets().resolve("objects");
         for (Map.Entry<String, SizeHash> entry : assetsIndex.objects.entrySet()) {
             String a = entry.getValue().hash.substring(0, 2); // first 2 chars
@@ -286,12 +287,12 @@ public class Minecraft {
         }
     }
 
-    static class AssetsIndex {
-        Map<String, SizeHash> objects;
+    public static class AssetsIndex {
+        public Map<String, SizeHash> objects;
 
         static class SizeHash {
-            String hash;
-            int size;
+            public String hash;
+            public int size;
         }
     }
 

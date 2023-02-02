@@ -19,7 +19,7 @@ class FileSystemUtil {
     static {
         FileSystemProvider jarFileSystemProvider2 = null;
         for (FileSystemProvider fileSystemProvider : FileSystemProvider.installedProviders()) {
-            if (fileSystemProvider.getScheme().equals("jar")) {
+            if ("jar".equals(fileSystemProvider.getScheme())) {
                 jarFileSystemProvider2 = fileSystemProvider;
             }
         }

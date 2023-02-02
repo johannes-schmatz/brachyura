@@ -104,7 +104,7 @@ public abstract class FabricModule extends BuildModule {
     }
 
     @Override
-    public IdeModule ideModule() {
+    public IdeModule createIdeModule() {
         Path cwd = PathUtil.resolveAndCreateDir(getModuleRoot(), "run");
         Lazy<List<Path>> classpath = new Lazy<>(() -> {
             Path mappingsClasspath = writeMappings4FabricStuff().getParent().getParent();
@@ -122,7 +122,7 @@ public abstract class FabricModule extends BuildModule {
             .dependencies(context.ideDependencies)
             .sourcePaths(getSrcDirs())
             .resourcePaths(getResourceDirs())
-            .dependencyModules(getModuleDependencies().stream().map(BuildModule::ideModule).collect(Collectors.toList()))
+            .dependencyModules(getModuleDependencies().stream().map(BuildModule::createIdeModule).collect(Collectors.toList()))
             .runConfigs(
                 new IdeModule.RunConfigBuilder()
                     .name("Minecraft Client")

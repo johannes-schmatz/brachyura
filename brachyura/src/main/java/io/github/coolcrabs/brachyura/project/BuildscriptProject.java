@@ -129,7 +129,7 @@ class BuildscriptProject extends BaseJavaProject {
     }
 
     static class BuildscriptClassloader extends ClassLoader implements ProcessingSink {
-        HashMap<String, byte[]> classes = new HashMap<>();
+        public final HashMap<String, byte[]> classes = new HashMap<>();
 
         BuildscriptClassloader(ClassLoader parent) {
             super(parent);

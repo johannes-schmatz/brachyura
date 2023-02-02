@@ -1,5 +1,7 @@
 package io.github.coolcrabs.brachyura.util;
 
+import org.tinylog.Logger;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -18,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 public class PathUtil {
@@ -209,6 +212,46 @@ public class PathUtil {
             Files.createDirectories(path);
         } catch (IOException e) {
             throw Util.sneak(e);
+        }
+    }
+
+    /**
+     * Merges multiple jars into one jar.
+     * @param outputJar the jar to be deleted and then filled with the content form the other jars
+     * @param jars the jars where the content should be taken from
+     */
+    public static void mergeJars(Path outputJar, Iterable<Path> jars) {
+        try {
+            Files.deleteIfExists(outputJar);
+
+            try (FileSystem fs = FileSystemUtil.newJarFileSystem(outputJar)) {
+                for (Path fromJar : jars) {
+                    try (
+                            FileSystem fromFs = FileSystemUtil.newJarFileSystem(fromJar);
+                            Stream<Path> stream = Files.walk(fromFs.getPath("/"));
+                    ) {
+                        stream.forEach(from -> {
+                            Path to = fs.getPath(from.toString());
+
+                            try {
+                                boolean exists = Files.exists(to);
+                                boolean isDirectory = Files.isDirectory(from);
+                                if (exists) {
+                                    if (!isDirectory) {
+                                        Logger.warn("Ignoring file: {}", to);
+                                    }
+                                } else {
+                                    Files.copy(from, to);
+                                }
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

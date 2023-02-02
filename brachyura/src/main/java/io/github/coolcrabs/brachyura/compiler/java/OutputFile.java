@@ -26,6 +26,10 @@ class OutputFile extends SimpleJavaFileObject {
         return super.toUri();
     }
 
+    public boolean exists() {
+        return exists;
+    }
+
     @Override
     public URI toUri() {
         // https://github.com/SpongePowered/Mixin/blob/1e1aa7fb52dec78630f3f2f53fd70a4c496a7d66/src/ap/java/org/spongepowered/tools/obfuscation/ReferenceManager.java#L158

@@ -33,7 +33,7 @@ public class JavaCompilationResult extends ProcessingSource {
     public void getOutputLocation(Location location, ProcessingSink sink) {
         String locHost = location.getName().replaceAll("[^a-zA-Z0-9]", ".");
         for (Map.Entry<URI, OutputFile> entry : fileManager.output.entrySet()) {
-            if (!entry.getValue().exists || !entry.getKey().getHost().equals(locHost)) continue;
+            if (!entry.getValue().exists() || !entry.getKey().getHost().equals(locHost)) continue;
             ProcessingId id = new ProcessingId(entry.getKey().getPath().substring(1), this);
             files.put(id, entry.getValue());
             sink.sink(entry.getValue()::openInputStream, id);

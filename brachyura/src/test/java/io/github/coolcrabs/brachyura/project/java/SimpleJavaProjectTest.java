@@ -47,7 +47,7 @@ class SimpleJavaProjectTest {
             public SimpleJavaModule createProjectModule() {
                 return new SimpleJavaProjectModule() {
                     @Override
-                    public IdeModule ideModule() {
+                    public IdeModule createIdeModule() {
                         return new IdeModule.IdeModuleBuilder()
                             .name(getModuleName())
                             .root(getModuleRoot())
@@ -57,7 +57,7 @@ class SimpleJavaProjectTest {
                             .testSourcePath(getModuleRoot().resolve("src").resolve("test").resolve("java"))
                             .testResourcePath(getModuleRoot().resolve("src").resolve("test").resolve("resources"))
                             .dependencies(dependencies.get())
-                            .dependencyModules(getModuleDependencies().stream().map(BuildModule::ideModule).collect(Collectors.toList()))
+                            .dependencyModules(getModuleDependencies().stream().map(BuildModule::createIdeModule).collect(Collectors.toList()))
                             .runConfigs(
                                 new RunConfigBuilder()
                                     .name("bruh")

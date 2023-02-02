@@ -14,8 +14,8 @@ import io.github.coolcrabs.brachyura.util.Util;
 class InputFile extends SimpleJavaFileObject {
     static final Kind[] KINDS = Kind.values();
 
-    Supplier<InputStream> in;
-    String path;
+    public final Supplier<InputStream> in;
+    public final String path;
 
     protected InputFile(Supplier<InputStream> in, ProcessingId id) {
         super(uri(id), getKind(id.path));

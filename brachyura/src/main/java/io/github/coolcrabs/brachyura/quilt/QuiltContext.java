@@ -100,8 +100,8 @@ public abstract class QuiltContext extends FabricContext {
         @Override
         public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
             for (ProcessingEntry e : inputs) {
-                boolean fmj = e.id.path.equals("fabric.mod.json");
-                boolean qmj = e.id.path.equals("quilt.mod.json");
+                boolean fmj = "fabric.mod.json".equals(e.id.path);
+                boolean qmj = "quilt.mod.json".equals(e.id.path);
                 if (fmj || qmj) {
                     Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
                     JsonObject modJson;
@@ -131,13 +131,13 @@ public abstract class QuiltContext extends FabricContext {
             // Prefer a mod's qmj otherwise use fmj
             HashMap<ProcessingSource, ProcessingEntry> mjs = new HashMap<>();
             for (ProcessingEntry e : inputs) {
-                if (e.id.path.equals("quilt.mod.json") || (e.id.path.equals("fabric.mod.json") && mjs.get(e.id.source) == null)) {
+                if ("quilt.mod.json".equals(e.id.path) || ("fabric.mod.json".equals(e.id.path) && mjs.get(e.id.source) == null)) {
                     mjs.put(e.id.source, e);
                 }
             }
             for (ProcessingEntry e : mjs.values()) {
-                boolean fmj = e.id.path.equals("fabric.mod.json");
-                boolean qmj = e.id.path.equals("quilt.mod.json");
+                boolean fmj = "fabric.mod.json".equals(e.id.path);
+                boolean qmj = "quilt.mod.json".equals(e.id.path);
                 if (fmj || qmj) {
                     JsonObject modJson;
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(e.in.get(), StandardCharsets.UTF_8))) {
@@ -205,7 +205,7 @@ public abstract class QuiltContext extends FabricContext {
     }
 
     public static class QmjJijApplier implements Processor {
-        final List<Path> jij;
+        public final List<Path> jij;
 
         public QmjJijApplier(List<Path> jij) {
             this.jij = jij;

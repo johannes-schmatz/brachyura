@@ -9,7 +9,7 @@ import io.github.coolcrabs.brachyura.project.java.BaseJavaProject;
 import io.github.coolcrabs.brachyura.util.PathUtil;
 
 public class Project {
-    BaseJavaProject buildscriptIdeProject;
+    public BaseJavaProject buildscriptIdeProject;
 
     public void getTasks(Consumer<Task> p) {
         // no default tasks
@@ -33,7 +33,7 @@ public class Project {
         return buildscriptIdeProject;
     }
 
-    void setIdeProject(BaseJavaProject ideProject) {
+    public void setIdeProject(BaseJavaProject ideProject) {
         this.buildscriptIdeProject = ideProject;
     }
 }

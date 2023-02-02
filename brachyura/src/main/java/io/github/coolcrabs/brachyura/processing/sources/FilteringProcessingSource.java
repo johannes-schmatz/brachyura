@@ -11,8 +11,8 @@ import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 
 public class FilteringProcessingSource extends ProcessingSource {
-    final ProcessingSource parent;
-    final Predicate<ProcessingEntry> filter;
+    public final ProcessingSource parent;
+    public final Predicate<ProcessingEntry> filter;
 
     public FilteringProcessingSource(ProcessingSource parent, Predicate<ProcessingEntry> filter) {
         this.parent = parent;
@@ -28,8 +28,8 @@ public class FilteringProcessingSource extends ProcessingSource {
         }
     }
     
-    static class Collector implements ProcessingSink {
-        ArrayList<ProcessingEntry> e = new ArrayList<>();
+    public static class Collector implements ProcessingSink {
+        public final ArrayList<ProcessingEntry> e = new ArrayList<>();
 
         @Override
         public void sink(Supplier<InputStream> in, ProcessingId id) {

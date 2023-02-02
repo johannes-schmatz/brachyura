@@ -14,12 +14,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import io.github.coolcrabs.brachyura.decompiler.fernflower.FernflowerDecompiler;
+import io.github.coolcrabs.brachyura.maven.Maven;
 import org.jetbrains.annotations.Nullable;
 
 import io.github.coolcrabs.accesswidener.AccessWidener;
 import io.github.coolcrabs.accesswidener.AccessWidenerReader;
 import io.github.coolcrabs.brachyura.decompiler.BrachyuraDecompiler;
-import io.github.coolcrabs.brachyura.decompiler.cfr.CfrDecompiler;
 import io.github.coolcrabs.brachyura.dependency.JavaJarDependency;
 import io.github.coolcrabs.brachyura.exception.UnknownJsonException;
 import io.github.coolcrabs.brachyura.fabric.FabricContext.ModDependencyCollector;
@@ -59,7 +60,16 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
     }
 
     public BrachyuraDecompiler decompiler() {
-        return new CfrDecompiler();
+        return new FernflowerDecompiler(
+                Maven.getMavenJarDep(
+                        "https://maven.quiltmc.org/repository/release",
+                        new MavenId(
+                                "org.quiltmc",
+                                "quiltflower",
+                                "1.8.1"
+                        )
+                )
+        );
     }
 
     public Path[] getSrcDirs() {
@@ -220,7 +230,7 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
 
     @Override
     public IdeModule[] getIdeModules() {
-        return new IdeModule[]{module.get().ideModule()};
+        return new IdeModule[]{module.get().createIdeModule()};
     }
 
     public ProcessorChain resourcesProcessingChain() {

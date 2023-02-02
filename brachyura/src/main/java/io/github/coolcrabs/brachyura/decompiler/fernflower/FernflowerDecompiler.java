@@ -14,20 +14,20 @@ import io.github.coolcrabs.fernutil.FernUtil;
 import net.fabricmc.mappingio.tree.MappingTree;
 
 public class FernflowerDecompiler extends BrachyuraDecompiler {
-    JavaJarDependency ff;
+    JavaJarDependency fernflower;
 
-    public FernflowerDecompiler(JavaJarDependency ff) {
-        this.ff = ff;
+    public FernflowerDecompiler(JavaJarDependency fernflower) {
+        this.fernflower = fernflower;
     }
 
     @Override
     public String getName() {
-        return ff.mavenId.artifactId + " (" + ff.mavenId.groupId + ")";
+        return fernflower.mavenId.groupId + "." + fernflower.mavenId.artifactId;
     }
 
     @Override
     public String getVersion() {
-        return ff.mavenId.version;
+        return fernflower.mavenId.version;
     }
 
     @Override
@@ -39,7 +39,7 @@ public class FernflowerDecompiler extends BrachyuraDecompiler {
     protected void decompileAndLinemap(Path jar, List<Path> classpath, Path resultDir, @Nullable MappingTree tree, int namespace) {
         DecompileResult r = getDecompileResult(jar, resultDir);
         DecompileLineNumberTable table = new DecompileLineNumberTable();
-        FernUtil.decompile(ff.jar, jar, r.sourcesJar, classpath, l -> {
+        FernUtil.decompile(fernflower.jar, jar, r.sourcesJar, classpath, l -> {
             if (l.mapping != null) table.classes.put(l.clazz, new ClassLineMap(l.mapping));
         }, tree == null ? null : new FFJavadocProvider(tree, namespace));
         LineNumberTableReplacer.replaceLineNumbers(jar, r.jar, table);

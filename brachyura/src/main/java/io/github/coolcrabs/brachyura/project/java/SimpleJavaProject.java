@@ -94,7 +94,7 @@ public abstract class SimpleJavaProject extends BaseJavaProject {
 
     @Override
     public IdeModule[] getIdeModules() {
-        return new IdeModule[] {projectModule.get().ideModule()};
+        return new IdeModule[] {projectModule.get().createIdeModule()};
     }
 
     public JavaJarDependency build() {
