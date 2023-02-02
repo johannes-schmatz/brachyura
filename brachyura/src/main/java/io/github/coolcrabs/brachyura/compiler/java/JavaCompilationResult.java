@@ -6,7 +6,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import javax.tools.JavaFileManager.Location;
@@ -18,8 +18,8 @@ import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 
 public class JavaCompilationResult extends ProcessingSource {
-    final BrachyuraJavaFileManager fileManager;
-    final HashMap<ProcessingId, OutputFile> files = new HashMap<>(); 
+    public final BrachyuraJavaFileManager fileManager;
+    public final HashMap<ProcessingId, OutputFile> files = new HashMap<>();
 
     JavaCompilationResult(BrachyuraJavaFileManager s) {
         this.fileManager = s;

@@ -11,7 +11,7 @@ import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.util.Util;
 
 public class DirectoryProcessingSink implements ProcessingSink {
-    final Path path;
+    public final Path path;
 
     public DirectoryProcessingSink(Path path) {
         this.path = path;

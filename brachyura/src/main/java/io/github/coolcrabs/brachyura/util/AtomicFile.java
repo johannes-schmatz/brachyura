@@ -23,7 +23,7 @@ public class AtomicFile implements AutoCloseable {
     @Override
     public void close() {
         if (!commited) {
-            Logger.warn("Atomic {} not commited", target.toString());
+            Logger.warn("Atomic {} not committed", target.toString());
             try {
                 Files.delete(tempPath);
             } catch (Exception e) {

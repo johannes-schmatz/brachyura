@@ -2,9 +2,11 @@ package io.github.coolmineman.trieharder;
 
 import java.io.IOException;
 
-\u002f\u002f I love java
-\u002f\u002f Excludes comments and strings
-\u002f\u002f https://docs.oracle.com/javase/specs/jls/se17/html/jls-3.html
+/*
+ * I love java
+ * Excludes comments and strings
+ * https://docs.oracle.com/javase/specs/jls/se17/html/jls-3.html
+ */
 public class UnicodeEscapeYeeterCharIn implements ReplacerCharIn {
     ReplacerCharIn parent;
 

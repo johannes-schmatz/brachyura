@@ -41,7 +41,7 @@ public class Maven {
         return (FileDependency) getMavenDep(mavenRepo, dep, extension, false, allowDownload);
     }
 
-    private static Dependency getMavenDep(String mavenRepo, MavenId dep, String extension, boolean isJavaJar, boolean allowDownload) {
+    public static Dependency getMavenDep(String mavenRepo, MavenId dep, String extension, boolean isJavaJar, boolean allowDownload) {
         try {
             URI mavenRepoUri = new URI(addTrailSlash(mavenRepo));
             boolean local = "file".equals(mavenRepoUri.getScheme());
@@ -75,7 +75,7 @@ public class Maven {
                             download(sourcesPath, sourcesRelativeDownload, mavenRepoUri);
                             sources = true;
                         } catch (FileNotFoundException e) {
-                            Logger.info("No sources found for " + dep.toString());
+                            Logger.info("No sources found for {}", dep);
                             if (!local) Files.createFile(nosources);
                         }
                     }
@@ -103,7 +103,7 @@ public class Maven {
         return string.endsWith("/") ? string : string + "/";
     }
 
-    private static Path mavenCache() {
+    public static Path mavenCache() {
         return PathUtil.cachePath().resolve("maven");
     }
 }

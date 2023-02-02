@@ -487,7 +487,7 @@ public abstract class FabricContext {
 
     // https://github.com/FabricMC/fabric-loom/blob/dev/0.11/src/main/java/net/fabricmc/loom/build/nesting/IncludedJarFactory.java
     public static class FmjGenerator implements Processor {
-        final Map<ProcessingSource, MavenId> map;
+        public final Map<ProcessingSource, MavenId> map;
 
         public FmjGenerator(Map<ProcessingSource, MavenId> map) {
             this.map = map;

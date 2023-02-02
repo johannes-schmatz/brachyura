@@ -100,7 +100,7 @@ public class JarMerger implements AutoCloseable {
                     }
 
                     if (!path.getFileName().toString().endsWith(".class")) {
-                        if (path.toString().equals("/META-INF/MANIFEST.MF")) {
+                        if ("/META-INF/MANIFEST.MF".equals(path.toString())) {
                             map.put("META-INF/MANIFEST.MF", new Entry(path, attr,
                                     "Manifest-Version: 1.0\nMain-Class: net.minecraft.client.Main\n".getBytes(StandardCharsets.UTF_8)));
                         } else {
@@ -209,8 +209,8 @@ public class JarMerger implements AutoCloseable {
 
                     if (visitor != writer) {
                         reader.accept(visitor, 0);
-                        data = writer.toByteArray();
-                        result = new Entry(result.path, result.metadata, data);
+                        byte[] data1 = writer.toByteArray();
+                        result = new Entry(result.path, result.metadata, data1);
                     }
                 }
 

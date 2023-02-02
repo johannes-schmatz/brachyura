@@ -10,7 +10,7 @@ import io.github.coolcrabs.brachyura.util.Util;
 import java.util.Arrays;
 
 public class ProcessorChain {
-    final Processor[] processors;
+    public final Processor[] processors;
 
     public ProcessorChain(Processor...processors) {
         this.processors = processors;
@@ -47,7 +47,7 @@ public class ProcessorChain {
         return Arrays.copyOf(processors, processors.length);
     }
 
-    static class Collector implements ProcessingSink {
+    public static class Collector implements ProcessingSink {
         ArrayList<ProcessingEntry> e = new ArrayList<>();
 
         @Override

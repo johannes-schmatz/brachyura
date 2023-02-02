@@ -23,13 +23,13 @@ public enum ProfilePlugin implements Plugin {
 
     static final boolean profile = Boolean.getBoolean("profile");
 
-    boolean init = false;
-    boolean usable = false;
-    MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-    ObjectName objectName = null;
-    HashMap<Long, String> path = new HashMap<>();
+    private boolean init = false;
+    private boolean usable = false;
+    private final MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+    private ObjectName objectName = null;
+    private final HashMap<Long, String> path = new HashMap<>();
 
-    Long currentRecord;
+    private Long currentRecord;
 
     @Override
     public void onEntry() {
@@ -47,9 +47,9 @@ public enum ProfilePlugin implements Plugin {
 
     Long startRecording(Path file) {
         try {
-            Long recordingId = (Long) mBeanServer.invoke(objectName, "newRecording", new Object[]{}, new String[0]);
+            Long recordingId = (Long) mBeanServer.invoke(objectName, "newRecording", new Object[0], new String[0]);
 
-            Object[] setConfigArgs = new Object[]{recordingId, "profile"};
+            Object[] setConfigArgs = {recordingId, "profile"};
             mBeanServer.invoke(objectName, "setPredefinedConfiguration", setConfigArgs, new String[]{long.class.getName(), String.class.getName()});
 
             path.put(recordingId, file.toString());

@@ -22,9 +22,9 @@ public class XmlUtil {
     }
 
     public static class FormattedXMLStreamWriter implements XMLStreamWriter, AutoCloseable {
-        final XMLStreamWriter parent;
-        final Writer w;
-        int indent = 0;
+        public final XMLStreamWriter parent;
+        public final Writer w;
+        private int indent = 0;
 
         public FormattedXMLStreamWriter(Writer w) throws XMLStreamException, FactoryConfigurationError {
             this.parent = XMLOutputFactory.newFactory().createXMLStreamWriter(w);
@@ -37,6 +37,10 @@ public class XmlUtil {
 
         public void unindent() {
             --indent;
+        }
+
+        public int getIndent() { // TODO: setIndent?
+            return indent;
         }
 
         public void newline() throws XMLStreamException {

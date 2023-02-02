@@ -13,9 +13,9 @@ import io.github.coolcrabs.brachyura.util.ByteArrayOutputStreamEx;
 import io.github.coolcrabs.brachyura.util.PathUtil;
 
 class OutputFile extends SimpleJavaFileObject {
-    final ByteArrayOutputStreamEx bytes = new ByteArrayOutputStreamEx();
-    final FileObject sibling;
-    boolean exists = false;
+    public final ByteArrayOutputStreamEx bytes = new ByteArrayOutputStreamEx();
+    public final FileObject sibling;
+    private boolean exists = false;
 
     protected OutputFile(URI uri, Kind kind, FileObject sibling) {
         super(uri, kind);
@@ -31,10 +31,10 @@ class OutputFile extends SimpleJavaFileObject {
         // https://github.com/SpongePowered/Mixin/blob/1e1aa7fb52dec78630f3f2f53fd70a4c496a7d66/src/ap/java/org/spongepowered/tools/obfuscation/ReferenceManager.java#L158
         boolean workaround = false;
         for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
-            if (e.getClassName().equals("org.spongepowered.tools.obfuscation.ReferenceManager")) {
+            if ("org.spongepowered.tools.obfuscation.ReferenceManager".equals(e.getClassName())) {
                 workaround = true;
             }
-            if (e.getMethodName().equals("createResource")) {
+            if ("createResource".equals(e.getMethodName())) {
                 return super.toUri();
             }
         }

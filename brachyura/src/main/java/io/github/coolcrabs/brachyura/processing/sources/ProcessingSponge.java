@@ -15,7 +15,7 @@ import io.github.coolcrabs.brachyura.processing.ProcessingSource;
  * You can then retrieve certain paths and/or use it as a source
  */
 public class ProcessingSponge extends ProcessingSource implements ProcessingSink {
-    HashMap<String, ProcessingEntry> a = new HashMap<>();
+    public final HashMap<String, ProcessingEntry> a = new HashMap<>();
 
     @Override
     public void sink(Supplier<InputStream> in, ProcessingId id) {

@@ -16,18 +16,17 @@ import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import javax.tools.JavaCompiler.CompilationTask;
 
-import org.jetbrains.annotations.Nullable;
 import org.tinylog.Logger;
 
 import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 import io.github.coolcrabs.brachyura.util.Util;
 
 public class JavaCompilation {
-    private ArrayList<String> options = new ArrayList<>();
-    private ArrayList<Path> sourceFiles = new ArrayList<>();
-    private ArrayList<Path> sourcePath = new ArrayList<>();
-    private ArrayList<Path> classpath = new ArrayList<>();
-    private ArrayList<ProcessingSource> classpathSources = new ArrayList<>();
+    public final ArrayList<String> options = new ArrayList<>();
+    public final ArrayList<Path> sourceFiles = new ArrayList<>();
+    public final ArrayList<Path> sourcePath = new ArrayList<>();
+    public final ArrayList<Path> classpath = new ArrayList<>();
+    public final ArrayList<ProcessingSource> classpathSources = new ArrayList<>();
     private JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
     public JavaCompilation addOption(String... options) {
@@ -111,10 +110,10 @@ public class JavaCompilation {
         return this;
     }
 
-    ArrayList<File> bruh(ArrayList<Path> p) {
+    static ArrayList<File> bruh(ArrayList<Path> p) {
         ArrayList<File> r = new ArrayList<>(p.size());
-        for (int i = 0; i < p.size(); i++) {
-            r.add(p.get(i).toFile());
+        for (Path path : p) {
+            r.add(path.toFile());
         }
         return r;
     }

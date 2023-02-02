@@ -30,7 +30,7 @@ import org.objectweb.asm.Opcodes;
  * parameter annotations.
  */
 class SyntheticParameterClassVisitor extends ClassVisitor {
-    private class SyntheticMethodVisitor extends MethodVisitor {
+    private static class SyntheticMethodVisitor extends MethodVisitor {
         private final int offset;
 
         SyntheticMethodVisitor(int api, int offset, MethodVisitor methodVisitor) {
@@ -98,7 +98,7 @@ class SyntheticParameterClassVisitor extends ClassVisitor {
         final String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 
-        return mv != null && synthetic != 0 && name.equals("<init>") && descriptor.startsWith(syntheticArgs) && !backoff
+        return mv != null && synthetic != 0 && "<init>".equals(name) && descriptor.startsWith(syntheticArgs) && !backoff
                ? new SyntheticMethodVisitor(api, synthetic, mv)
                : mv;
     }

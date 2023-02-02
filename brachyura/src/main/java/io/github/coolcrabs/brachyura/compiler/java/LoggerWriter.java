@@ -5,7 +5,7 @@ import java.io.Writer;
 import org.tinylog.Logger;
 
 class LoggerWriter extends Writer {
-    StringBuilder data = new StringBuilder();
+    public final StringBuilder data = new StringBuilder();
 
     @Override
     public void write(int c0) {

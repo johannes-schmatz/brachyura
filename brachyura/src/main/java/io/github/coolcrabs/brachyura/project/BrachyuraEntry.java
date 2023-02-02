@@ -31,7 +31,7 @@ public class BrachyuraEntry {
                     Task task = t.get(args[1]);
                     task.doTask(args.length > 3 ? Arrays.copyOfRange(args, 2, args.length) : new String[]{});
                 } else {
-                    Logger.info("Avalible buildscript tasks: " + t.toString());
+                    Logger.info("Available buildscript tasks: {}", t);
                 }
             } else {
                 Optional<Project> o = buildscriptProject.project.get();
@@ -44,7 +44,7 @@ public class BrachyuraEntry {
                         Task task = t.get(args[0]);
                         task.doTask(args.length > 2 ? Arrays.copyOfRange(args, 1, args.length) : new String[]{});
                     } else {
-                        Logger.info("Avalible tasks: " + t.toString());
+                        Logger.info("Available tasks: {}", t);
                     }
                 } else {
                     Logger.warn("Invalid build script :(");

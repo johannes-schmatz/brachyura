@@ -6,6 +6,6 @@ import java.util.List;
 class EntryGlobals {
     private EntryGlobals() { }
 
-    static Path projectDir;
-    static List<Path> buildscriptClasspath;
+    public static Path projectDir;
+    public static List<Path> buildscriptClasspath;
 }

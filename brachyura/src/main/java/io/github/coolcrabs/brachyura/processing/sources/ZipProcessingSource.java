@@ -17,7 +17,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class ZipProcessingSource extends ProcessingSource implements Closeable {
-    final FileSystem fs;
+    public final FileSystem fs;
     
     public ZipProcessingSource(Path file) {
         if (!Files.exists(file)) throw Util.sneak(new FileNotFoundException(file.toString()));

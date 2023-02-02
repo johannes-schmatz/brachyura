@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -23,8 +20,8 @@ public class ZipProcessingSink implements ProcessingSink, Closeable {
     // https://github.com/gradle/gradle/blob/master/subprojects/core/src/main/java/org/gradle/api/internal/file/archive/ZipCopyAction.java
     private static final long MAGIC_TIME = new GregorianCalendar(1980, Calendar.FEBRUARY, 1, 0, 0, 0).getTimeInMillis();
 
-    final ZipOutputStream out;
-    final TreeMap<ProcessingId, Supplier<InputStream>> entries = new TreeMap<>((a, b) -> a.path.compareTo(b.path));
+    public final ZipOutputStream out;
+    public final TreeMap<ProcessingId, Supplier<InputStream>> entries = new TreeMap<>(Comparator.comparing(a -> a.path));
 
     public ZipProcessingSink(Path zip) {
         this(PathUtil.outputStream(zip));

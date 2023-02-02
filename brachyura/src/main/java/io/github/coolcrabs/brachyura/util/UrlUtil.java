@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class UrlUtil {
     private UrlUtil() { }
-    private static ConcurrentHashMap<String, URLStreamHandler> handlers = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, URLStreamHandler> handlers = new ConcurrentHashMap<>();
 
     static {
         URL.setURLStreamHandlerFactory(StreamHandlerFactory.INSTANCE);

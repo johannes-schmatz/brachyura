@@ -8,9 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -36,7 +34,7 @@ public enum Intellijank implements Ide {
         if (Files.isDirectory(path)) {
             return jankFilePath(path);
         } else {
-            return "jar://" +  path.toString() + "!/";
+            return "jar://" + path + "!/";
         }
     }
 
@@ -45,6 +43,8 @@ public enum Intellijank implements Ide {
         return "file://" + path.toString();
     }
 
+    private static final Set<String> IGNORED_DOT_IDEA_FILES = new HashSet<>(Arrays.asList("vcs.xml", "discord.xml"));
+
     @Override
     public void updateProject(Path projectRoot, IdeModule... ideModules) {
         Ide.validate(ideModules);
@@ -52,10 +52,11 @@ public enum Intellijank implements Ide {
             Path ideaPath = projectRoot.resolve(".idea");
 
             if (Files.exists(ideaPath)) {
-                // Delete everything in .idea except for vcs.xml
+                // Delete everything in .idea except for vcs.xml and discord.xml
                 // We skip vcs.xml since otherwise we'll reset people's Git configurations
+                // discord.xml should be skipped to not reset people's Discord settings
                 try (DirectoryStream<Path> files = Files.newDirectoryStream(ideaPath,
-                        file -> !"vcs.xml".equals(file.getFileName().toString()))) {
+                        file -> !IGNORED_DOT_IDEA_FILES.contains(file.getFileName().toString()))) {
                     for (Path file : files) {
                         if (Files.isDirectory(file)) {
                             PathUtil.deleteDirectory(file);

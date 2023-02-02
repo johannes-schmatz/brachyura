@@ -24,11 +24,11 @@ public class VersionMeta {
         this.version = json.getAsJsonObject().get("id").getAsString();
     }
 
-    VMDownload getDownload(String download) {
+    public VMDownload getDownload(String download) {
         return (new Gson()).fromJson(json.getAsJsonObject().get("downloads").getAsJsonObject().get(download), VMDownload.class);
     }
 
-    List<VMDependency> getDependencies() {
+    public List<VMDependency> getDependencies() {
         Gson gson = new Gson();
         LinkedHashMap<String, VMDependency> result = new LinkedHashMap<>();
         JsonArray libraries = json.getAsJsonObject().get("libraries").getAsJsonArray();
@@ -66,32 +66,32 @@ public class VersionMeta {
         return new Gson().fromJson(json.getAsJsonObject().get("assetIndex"), VMAssets.class);
     }
 
-    static class VMAssets {
-        String id;
-        String sha1;
-        int size;
-        int totalSize;
-        String url;
+    public static class VMAssets {
+        public String id;
+        public String sha1;
+        public int size;
+        public int totalSize;
+        public String url;
     }
 
-    static class VMDownload {
-        String sha1;
-        int size;
-        String url;
+    public static class VMDownload {
+        public String sha1;
+        public int size;
+        public String url;
     }
 
-    static class VMDependencyDownload {
-        String path;
-        String sha1;
-        String size;
-        String url;
+    public static class VMDependencyDownload {
+        public String path;
+        public String sha1;
+        public String size;
+        public String url;
     }
 
-    static class VMDependency {
-        String name;
-        @Nullable VMDependencyDownload artifact;
-        @Nullable VMDependencyDownload natives;
-        @Nullable VMDependencyDownload sources;
+    public static class VMDependency {
+        public String name;
+        public @Nullable VMDependencyDownload artifact;
+        public @Nullable VMDependencyDownload natives;
+        public @Nullable VMDependencyDownload sources;
 
         VMDependency(String name) {
             this.name = name;

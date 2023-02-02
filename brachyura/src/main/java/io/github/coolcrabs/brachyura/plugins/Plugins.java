@@ -8,13 +8,13 @@ import io.github.coolcrabs.brachyura.profiler.ProfilePlugin;
 public class Plugins {
     private Plugins() { }
 
-    static ArrayList<Plugin> plugins = new ArrayList<>();
+    public static final ArrayList<Plugin> PLUGINS = new ArrayList<>();
     
     static {
-        plugins.add(ProfilePlugin.INSTANCE); // TODO: real plugin loading
+        PLUGINS.add(ProfilePlugin.INSTANCE); // TODO: real plugin loading
     }
 
     public static List<Plugin> getPlugins() {
-        return new ArrayList<>(plugins);
+        return new ArrayList<>(PLUGINS);
     }
 }

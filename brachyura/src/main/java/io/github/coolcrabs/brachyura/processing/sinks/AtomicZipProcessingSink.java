@@ -8,10 +8,11 @@ import io.github.coolcrabs.brachyura.processing.ProcessingId;
 import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.util.AtomicFile;
 import io.github.coolcrabs.brachyura.util.PathUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class AtomicZipProcessingSink implements ProcessingSink, AutoCloseable {
-    final AtomicFile file;
-    ZipProcessingSink delegate;
+    public final AtomicFile file;
+    private ZipProcessingSink delegate;
 
     public AtomicZipProcessingSink(Path zip) {
         file = new AtomicFile(zip);
@@ -37,5 +38,9 @@ public class AtomicZipProcessingSink implements ProcessingSink, AutoCloseable {
         }
         file.close();
     }
-    
+
+    @Nullable
+    public ZipProcessingSink getDelegate() {
+        return delegate;
+    }
 }

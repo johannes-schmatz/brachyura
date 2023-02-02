@@ -59,11 +59,11 @@ class BrachyuraJavaFileManager extends ForwardingJavaFileManager<StandardJavaFil
 
     @Override
     public Iterable<JavaFileObject> list(Location location, String packageName, Set<Kind> kinds, boolean recurse) throws IOException {
-        return () -> {
+        return () -> { // Iterable
             try {
                 return new Iterator<JavaFileObject>() {
-                    Iterator<JavaFileObject> a = extraCp.it(packageName, kinds, recurse);
-                    Iterator<JavaFileObject> b = BrachyuraJavaFileManager.super.list(location, packageName, kinds, recurse).iterator();
+                    final Iterator<JavaFileObject> a = extraCp.it(packageName, kinds, recurse);
+                    final Iterator<JavaFileObject> b = BrachyuraJavaFileManager.super.list(location, packageName, kinds, recurse).iterator();
 
                     @Override
                     public boolean hasNext() {

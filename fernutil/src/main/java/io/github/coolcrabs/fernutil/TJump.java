@@ -20,6 +20,7 @@ class TJump {
     public static class PackageHack {
         PackageHack() { }
 
+        // called via reflection from FernUtil
         public static void decompile(Path inJar, Path outSources, List<Path> cp, Consumer<LineNumbers> lines, JavadocProvider provider) throws IOException {
             boolean fabric;
             try {
