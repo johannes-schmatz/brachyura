@@ -22,7 +22,7 @@ public class Project {
     }
 
     public Path getProjectDir() {
-        return EntryGlobals.projectDir;
+        return EntryGlobals.getProjectDir();
     }
 
     public Path getLocalBrachyuraPath() {

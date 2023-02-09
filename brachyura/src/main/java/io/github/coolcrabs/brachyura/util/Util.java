@@ -11,4 +11,10 @@ public class Util {
     public static <T extends Throwable> void unsneak() throws T {
         //noop
     }
+
+    public static String getCaller() {
+        StackTraceElement[] stack = new Throwable().getStackTrace();
+        StackTraceElement callerOfCaller = stack[2];
+        return callerOfCaller.toString();
+    }
 }

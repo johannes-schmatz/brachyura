@@ -3,7 +3,6 @@ package io.github.coolcrabs.brachyura.project;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.tinylog.Logger;
 
@@ -14,15 +13,14 @@ public class BrachyuraEntry {
     private BrachyuraEntry() { }
 
     // Called via reflection by bootstrap
-    public static void main(String[] args, Path projectDir, List<Path> classpath) {
+    public static void main(String[] args) {
         int exitcode = 0;
         List<Plugin> plugins = Plugins.getPlugins();
         for (Plugin plugin : plugins) {
             plugin.onEntry();
         }
         try {
-            EntryGlobals.projectDir = projectDir;
-            EntryGlobals.buildscriptClasspath = classpath;
+            // bootstrap sets EntryGlobals for us
             BuildscriptProject buildscriptProject = new BuildscriptProject();
             if (args.length >= 1 && "buildscript".equals(args[0])) {
                 Tasks t = new Tasks();
@@ -47,6 +45,7 @@ public class BrachyuraEntry {
                     }
                 } else {
                     Logger.warn("Invalid build script :(");
+                    exitcode = 1;
                 }
             }
         } catch (Exception e) {

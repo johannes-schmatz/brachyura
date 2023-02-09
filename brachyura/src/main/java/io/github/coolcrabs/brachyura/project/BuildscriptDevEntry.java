@@ -1,10 +1,11 @@
 package io.github.coolcrabs.brachyura.project;
 
 import java.io.File;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.github.coolcrabs.brachyura.plugins.Plugin;
@@ -17,8 +18,23 @@ class BuildscriptDevEntry {
             plugin.onEntry();
         }
         try {
-            EntryGlobals.projectDir = Paths.get(args[0]);
-            EntryGlobals.buildscriptClasspath = Arrays.stream(args[1].split(File.pathSeparator)).map(Paths::get).collect(Collectors.toList());
+            {
+                Path projectDir = Paths.get(args[0]);
+                List<Path> buildscriptClasspath = Arrays.stream(args[1].split(File.pathSeparator)).map(Paths::get).collect(Collectors.toList());
+
+                // setup EntryGlobals
+                Class<?> entryGlobals = Class.forName("io.github.coolcrabs.brachyura.project.EntryGlobals");
+                Method m = entryGlobals.getDeclaredMethod("set", Path.class, List.class); // Path, List<Path>
+                m.setAccessible(true);
+                m.invoke(null, projectDir, buildscriptClasspath);
+
+                // maybe make EntryGlobals use System.getProperty instead by default (to remove this code)
+                System.out.println("classpath as of system.get: " + System.getProperty("java.class.path"));
+                System.out.println("classpath as of arguments: " + buildscriptClasspath);
+
+
+            }
+
             Project buildscript = (Project) Class.forName("Buildscript").getDeclaredConstructor().newInstance();
             BuildscriptProject buildscriptProject = new BuildscriptProject() {
                 @Override

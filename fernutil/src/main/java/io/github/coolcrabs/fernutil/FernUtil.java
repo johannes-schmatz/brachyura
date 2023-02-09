@@ -13,7 +13,9 @@ public class FernUtil {
         try {
             try (FUClassLoader classLoader = new FUClassLoader(new URL[]{fernflower.toUri().toURL(), FernUtil.class.getProtectionDomain().getCodeSource().getLocation()})) {
                 Class<?> jump = Class.forName("io.github.coolcrabs.fernutil.TJump$PackageHack", true, classLoader); // Different classloaders so can't package private lookup :()
-                MethodHandles.publicLookup().unreflect(jump.getMethods()[0]).invokeWithArguments(inJar, outSources, cp, lines, provider == null ? NullJavadocProvider.INSTANCE : provider);
+                MethodHandles.publicLookup().unreflect(
+                        jump.getMethods()[0]
+                ).invokeWithArguments(inJar, outSources, cp, lines, provider == null ? NullJavadocProvider.INSTANCE : provider);
             }
         } catch (Throwable e) {
             sneak(e);

@@ -1,17 +1,5 @@
 package io.github.coolcrabs.brachyura.project;
 
-import java.io.File;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import org.jetbrains.annotations.Nullable;
-import org.tinylog.Logger;
-
 import io.github.coolcrabs.brachyura.compiler.java.CompilationFailedException;
 import io.github.coolcrabs.brachyura.compiler.java.JavaCompilation;
 import io.github.coolcrabs.brachyura.compiler.java.JavaCompilationResult;
@@ -21,11 +9,22 @@ import io.github.coolcrabs.brachyura.ide.IdeModule.RunConfigBuilder;
 import io.github.coolcrabs.brachyura.processing.ProcessingId;
 import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.project.java.BaseJavaProject;
-import io.github.coolcrabs.brachyura.util.JvmUtil;
-import io.github.coolcrabs.brachyura.util.Lazy;
-import io.github.coolcrabs.brachyura.util.PathUtil;
-import io.github.coolcrabs.brachyura.util.StreamUtil;
-import io.github.coolcrabs.brachyura.util.Util;
+import io.github.coolcrabs.brachyura.util.*;
+import org.jetbrains.annotations.Nullable;
+import org.tinylog.Logger;
+
+import java.io.File;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
+import java.security.cert.Certificate;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 class BuildscriptProject extends BaseJavaProject {
     @Override
@@ -62,15 +61,18 @@ class BuildscriptProject extends BaseJavaProject {
                     )
             );
         }
-        return new IdeModule[] {
-            new IdeModule.IdeModuleBuilder()
+        IdeModule.IdeModuleBuilder b = new IdeModule.IdeModuleBuilder()
                 .name("Buildscript")
                 .root(getProjectDir())
-                .sourcePath(getSrcDir())
-                .dependencies(this::getIdeDependencies)
-                .runConfigs(runConfigs)
-            .build()
-        };
+                .sourcePath(getSrcDir());
+        if (p instanceof BrachyuraBuildscript) {
+            b.dependencyModules(((BrachyuraBuildscript) p).getBrachyuraIdeModule());
+        } else {
+            b.dependencies(this::getIdeDependencies);
+        }
+        b.runConfigs(runConfigs);
+
+        return new IdeModule[] {b.build()};
     }
 
     public final Lazy<Project> project = new Lazy<>(this::createProject);
@@ -93,6 +95,7 @@ class BuildscriptProject extends BaseJavaProject {
         }
     }
 
+    @Nullable
     public ClassLoader getBuildscriptClassLoader() {
         try {
             JavaCompilationResult compilation = new JavaCompilation()
@@ -100,7 +103,7 @@ class BuildscriptProject extends BaseJavaProject {
                 .addClasspath(getCompileDependencies())
                 .addOption(JvmUtil.compileArgs(JvmUtil.CURRENT_JAVA_VERSION, 8))
                 .compile();
-            BuildscriptClassloader r = new BuildscriptClassloader(BuildscriptProject.class.getClassLoader());
+            BuildscriptClassloader r = new BuildscriptClassloader(BuildscriptProject.class.getClassLoader(), getSrcDir());
             compilation.getInputs(r);
             return r;
         } catch (CompilationFailedException e) {
@@ -111,7 +114,7 @@ class BuildscriptProject extends BaseJavaProject {
 
     public List<JavaJarDependency> getIdeDependencies() {
         List<Path> compileDeps = getCompileDependencies();
-        ArrayList<JavaJarDependency> result = new ArrayList<>(compileDeps.size());
+        List<JavaJarDependency> result = new ArrayList<>(compileDeps.size());
         for (Path p : compileDeps) {
             Path source = p.getParent().resolve(p.getFileName().toString().replace(".jar", "-sources.jar"));
             if (!Files.exists(source)) source = null;
@@ -121,14 +124,21 @@ class BuildscriptProject extends BaseJavaProject {
     }
 
     public List<Path> getCompileDependencies() {
-        return EntryGlobals.buildscriptClasspath;
+        return EntryGlobals.getBuildscriptClasspath();
     }
 
     static class BuildscriptClassloader extends ClassLoader implements ProcessingSink {
+        public final ProtectionDomain defaultProtectionDomain;
         public final HashMap<String, byte[]> classes = new HashMap<>();
 
-        BuildscriptClassloader(ClassLoader parent) {
+        BuildscriptClassloader(ClassLoader parent, Path srcDir) {
             super(parent);
+            try {
+                CodeSource cs = new CodeSource(srcDir.toUri().toURL(), (Certificate[]) null);
+                defaultProtectionDomain = new ProtectionDomain(cs, null, this, null);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         @Override
@@ -136,19 +146,55 @@ class BuildscriptProject extends BaseJavaProject {
             try {
                 if (id.path.endsWith(".class")) {
                     try (InputStream i = in.get()) {
-                        classes.put(id.path.substring(0, id.path.length() - 6).replace("/", "."), StreamUtil.readFullyAsBytes(i));
+                        String dottedName = id.path
+                                .substring(0, id.path.length() - 6)
+                                .replace("/", ".");
+                        classes.put(dottedName, StreamUtil.readFullyAsBytes(i));
                     }
+                } else {
+                    Logger.warn("Cannot define resource {}", id.path);
                 }
             } catch (Exception e) {
                 throw Util.sneak(e);
             }
         }
-        
-        @Override
-        protected Class<?> findClass(String name) throws ClassNotFoundException {
+
+        @Nullable
+        protected Class<?> findClassFromUs(String name) {
+            // check if it's a class that we know
             byte[] data = classes.get(name);
-            if (data == null) return super.findClass(name);
-            return defineClass(name, data, 0, data.length);
+            if (data == null) return null;
+            return defineClass(name, data, 0, data.length, defaultProtectionDomain);
+        }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            synchronized (getClassLoadingLock(name)) {
+                Class<?> c = findLoadedClass(name);
+
+                // without this different order, it would fail if you run
+                // java Buildscript build
+                // as the parent loader would already know the Buildscript class
+                // (this case only happens for building brachyura itself)
+                if (c == null) {
+                    // try out our classloader first
+                    c = findClassFromUs(name);
+
+                    // then load from the parent
+                    if (c == null && getParent() != null) {
+                        c = getParent().loadClass(name);
+                    }
+                }
+                if (resolve) {
+                    resolveClass(c);
+                }
+                return c;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "BuildscriptClassloader@".concat(super.toString());
         }
     }
 }
