@@ -43,6 +43,11 @@ public enum Intellijank implements Ide {
         return "file://" + path.toString();
     }
 
+    // output in $MODULE_DIR$/src/main/java
+    String jankFilePathModule(IdeModule ideModule, Path path) {
+        return "file://$MODULE_DIR$/" + ideModule.root.relativize(path);
+    }
+
     private static final Set<String> IGNORED_DOT_IDEA_FILES = new HashSet<>(Arrays.asList("vcs.xml", "discord.xml"));
 
     @Override
@@ -132,8 +137,8 @@ public enum Intellijank implements Ide {
         }
     }
 
-    void writeModule(IdeModule ideProject) throws IOException, XMLStreamException {
-        try (FormattedXMLStreamWriter w = XmlUtil.newStreamWriter(Files.newBufferedWriter(ideProject.root.resolve(ideProject.name + ".iml")))) {
+    void writeModule(IdeModule ideModule) throws IOException, XMLStreamException {
+        try (FormattedXMLStreamWriter w = XmlUtil.newStreamWriter(Files.newBufferedWriter(ideModule.root.resolve(ideModule.name + ".iml")))) {
             w.writeStartDocument("UTF-8", "1.0");
             w.newline();
             w.writeStartElement("module");
@@ -143,7 +148,7 @@ public enum Intellijank implements Ide {
                 w.newline();
                 w.writeStartElement("component");
                 w.writeAttribute("name", "NewModuleRootManager");
-                w.writeAttribute("LANGUAGE_LEVEL", languageLevel(ideProject.javaVersion));
+                w.writeAttribute("LANGUAGE_LEVEL", languageLevel(ideModule.javaVersion));
                 w.writeAttribute("inherit-compiler-output", "true");
                 w.indent();
                 w.newline();
@@ -152,27 +157,27 @@ public enum Intellijank implements Ide {
                     w.writeStartElement("content");
                     w.writeAttribute("url", "file://$MODULE_DIR$");
                     w.indent();
-                        for (Path sourceDir : ideProject.sourcePaths) {
+                        for (Path sourceDir : ideModule.sourcePaths) {
                             w.newline();
                             w.writeEmptyElement("sourceFolder");
-                            w.writeAttribute("url", jankFilePath(sourceDir));
+                            w.writeAttribute("url", jankFilePathModule(ideModule, sourceDir));
                         }
-                        for (Path resourceDir : ideProject.resourcePaths) {
+                        for (Path resourceDir : ideModule.resourcePaths) {
                             w.newline();
                             w.writeEmptyElement("sourceFolder");
-                            w.writeAttribute("url", jankFilePath(resourceDir));
+                            w.writeAttribute("url", jankFilePathModule(ideModule, resourceDir));
                             w.writeAttribute("type", "java-resource");
                         }
-                        for (Path sourceDir : ideProject.testSourcePaths) {
+                        for (Path sourceDir : ideModule.testSourcePaths) {
                             w.newline();
                             w.writeEmptyElement("sourceFolder");
-                            w.writeAttribute("url", jankFilePath(sourceDir));
+                            w.writeAttribute("url", jankFilePathModule(ideModule, sourceDir));
                             w.writeAttribute("isTestSource", "true");
                         }
-                        for (Path resourceDir : ideProject.testResourcePaths) {
+                        for (Path resourceDir : ideModule.testResourcePaths) {
                             w.newline();
                             w.writeEmptyElement("sourceFolder");
-                            w.writeAttribute("url", jankFilePath(resourceDir));
+                            w.writeAttribute("url", jankFilePathModule(ideModule, resourceDir));
                             w.writeAttribute("type", "java-test-resource");
                         }
                     w.unindent();
@@ -185,12 +190,20 @@ public enum Intellijank implements Ide {
                     w.writeEmptyElement("orderEntry");
                     w.writeAttribute("type", "sourceFolder");
                     w.writeAttribute("forTests", "false");
-                    for (JavaJarDependency dep : ideProject.dependencies.get()) {
+                    for (JavaJarDependency dep : ideModule.dependencies.get()) {
                         w.newline();
                         w.writeEmptyElement("orderEntry");
                         w.writeAttribute("type", "library");
                         w.writeAttribute("name", dep.jar.getFileName().toString());
                         w.writeAttribute("level", "project");
+                    }
+                    for (IdeModule dep : ideModule.dependencyModules) {
+                        w.newline();
+                        w.writeEmptyElement("orderEntry");
+                        w.writeAttribute("type", "module");
+                        w.writeAttribute("module-name", dep.name);
+                        w.writeAttribute("level", "project");
+                        w.writeAttribute("exported", "");
                     }
                 w.unindent();
                 w.newline();
@@ -256,6 +269,7 @@ public enum Intellijank implements Ide {
                     }
                     runArg.setLength(Math.max(runArg.length() - 1, 0));
                     option(w, "PROGRAM_PARAMETERS", runArg.toString());
+
                     w.unindent();
                     w.newline();
                     w.writeEndElement();
