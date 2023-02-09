@@ -27,6 +27,11 @@ public class AccessWidenerFormatException extends RuntimeException {
         this.lineNumber = lineNumber;
     }
 
+    public AccessWidenerFormatException(int lineNumber, Throwable cause) {
+        super(cause);
+        this.lineNumber = lineNumber;
+    }
+
     /**
      * The line on which the error occurred. Starts with 1.
      */

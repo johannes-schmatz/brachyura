@@ -84,7 +84,9 @@ public final class AccessWidenerReader {
         visitor.visitVersion(version);
 
         if (currentNamespace != null && !header.namespace.equals(currentNamespace)) {
-            throw error("Namespace (%s) does not match current runtime namespace (%s)", header.namespace, currentNamespace);
+            throw new AccessWidenerFormatException(lineNumber,
+                    "Namespace (" + header.namespace + ") does not match current runtime namespace (" + currentNamespace + ")"
+            );
         }
 
         visitor.visitHeader(header.namespace);
@@ -94,6 +96,8 @@ public final class AccessWidenerReader {
         Pattern delimiter = version < V2 ? V1_DELIMITER : V2_DELIMITER;
 
         while ((line = reader.readLine()) != null) {
+            // we can safely use lineNumber below for errors, since this is first incremented and then used
+            // (we are 0 based, but we increment first, AccessWidenerFormatException is 1 based)
             lineNumber++;
 
             line = handleComment(version, line);
@@ -103,7 +107,9 @@ public final class AccessWidenerReader {
             }
 
             if (Character.isWhitespace(line.codePointAt(0))) {
-                throw error("Leading whitespace is not allowed");
+                throw new AccessWidenerFormatException(lineNumber,
+                        "Leading whitespace is not allowed"
+                );
             }
 
             // Note that this trims trailing spaces. See the docs of split for details.
@@ -124,7 +130,9 @@ public final class AccessWidenerReader {
             AccessType access = readAccessType(accessType);
 
             if (tokens.size() < 2) {
-                throw error("Expected <class|field|method> following " + tokens.get(0));
+                throw new AccessWidenerFormatException(lineNumber,
+                        "Expected <class|field|method> following " + tokens.get(0)
+                );
             }
 
             switch (tokens.get(1)) {
@@ -138,7 +146,9 @@ public final class AccessWidenerReader {
                 handleMethod(line, tokens, transitive, access);
                 break;
             default:
-                throw error("Unsupported type: '" + tokens.get(1) + "'");
+                throw new AccessWidenerFormatException(lineNumber,
+                        "Unsupported type: '" + tokens.get(1) + "'"
+                );
             }
         }
     }
@@ -184,7 +194,9 @@ public final class AccessWidenerReader {
 
     private void handleClass(String line, List<String> tokens, boolean transitive, AccessType access) {
         if (tokens.size() != 3) {
-            throw error("Expected (<access> class <className>) got (%s)", line);
+            throw new AccessWidenerFormatException(lineNumber,
+                    "Expected (<access> class <className>) got (" + line + ")"
+            );
         }
 
         String name = tokens.get(2);
@@ -193,13 +205,15 @@ public final class AccessWidenerReader {
         try {
             visitor.visitClass(name, access, transitive);
         } catch (Exception e) {
-            throw error(e.toString());
+            throw new AccessWidenerFormatException(lineNumber, e);
         }
     }
 
     private void handleField(String line, List<String> tokens, boolean transitive, AccessType access) {
         if (tokens.size() != 5) {
-            throw error("Expected (<access> field <className> <fieldName> <fieldDesc>) got (%s)", line);
+            throw new AccessWidenerFormatException(lineNumber,
+                    "Expected (<access> field <className> <fieldName> <fieldDesc>) got (" + line + ")"
+            );
         }
 
         String owner = tokens.get(2);
@@ -211,13 +225,15 @@ public final class AccessWidenerReader {
         try {
             visitor.visitField(owner, fieldName, descriptor, access, transitive);
         } catch (Exception e) {
-            throw error(e.toString());
+            throw new AccessWidenerFormatException(lineNumber, e);
         }
     }
 
     private void handleMethod(String line, List<String> tokens, boolean transitive, AccessType access) {
         if (tokens.size() != 5) {
-            throw error("Expected (<access> method <className> <methodName> <methodDesc>) got (%s)", line);
+            throw new AccessWidenerFormatException(lineNumber,
+                    "Expected (<access> method <className> <methodName> <methodDesc>) got (" + line + ")"
+            );
         }
 
         String owner = tokens.get(2);
@@ -229,7 +245,7 @@ public final class AccessWidenerReader {
         try {
             visitor.visitMethod(owner, methodName, descriptor, access, transitive);
         } catch (Exception e) {
-            throw error(e.toString());
+            throw new AccessWidenerFormatException(lineNumber, e);
         }
     }
 
@@ -259,7 +275,9 @@ public final class AccessWidenerReader {
         case "mutable":
             return AccessType.MUTABLE;
         default:
-            throw error("Unknown access type: " + access);
+            throw new AccessWidenerFormatException(lineNumber,
+                    "Unknown access type: " + access
+            );
         }
     }
 
@@ -280,18 +298,12 @@ public final class AccessWidenerReader {
         }
     }
 
-    private AccessWidenerFormatException error(String format, Object... args) {
-        // Note that getLineNumber is actually 1 line after the current line position,
-        // because it is 0-based. But since our reporting here is 1-based, it works out.
-        // If this class ever starts reading lines incrementally however, it'd need to be changed.
-        String message = String.format(Locale.ROOT, format, args);
-        return new AccessWidenerFormatException(lineNumber, message);
-    }
-
     private void validateClassName(String className) {
         // Common mistake is using periods to separate packages/class names
         if (className.contains(".")) {
-            throw error("Class-names must be specified as a/b/C, not a.b.C, but found: %s", className);
+            throw new AccessWidenerFormatException(lineNumber,
+                    "Class-names must be specified as a/b/C, not a.b.C, but found: " + className
+            );
         }
     }
 

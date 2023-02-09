@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 import io.github.coolcrabs.accesswidener.AccessWidenerReader.AccessType;
 
 public class AccessWidener implements AccessWidenerVisitor {
-    String namespace;
+    private String namespace;
     public final Map<String, ClassAwData> clsMap = new HashMap<>();
 
     public static class ClassAwData {
