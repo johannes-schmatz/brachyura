@@ -107,6 +107,8 @@ public class Buildscript {
 
         ClassLoader classLoader = new URLClassLoader(urls, ClassLoader.getSystemClassLoader()/*.getParent()*/);
 
+        Thread.currentThread().setContextClassLoader(classLoader);
+
 
         // setup EntryGlobals
         Class<?> entryGlobals = Class.forName("io.github.coolcrabs.brachyura.project.EntryGlobals", true, classLoader);

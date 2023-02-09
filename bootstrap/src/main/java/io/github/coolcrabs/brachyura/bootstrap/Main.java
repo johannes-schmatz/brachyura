@@ -1,114 +1,124 @@
 package io.github.coolcrabs.brachyura.bootstrap;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("all") // Sue me
+//@SuppressWarnings("all") // Sue me
 public class Main {
-    public static final int VERSION = 0;
     static final Path BOOTSTRAP_DIR = Paths.get(System.getProperty("user.home")).resolve(".brachyura").resolve("bootstrap");
 
+    public static final String[] LIBS = {
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.3/asm-9.3.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.3/asm-9.3-sources.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm-analysis/9.3/asm-analysis-9.3.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm-analysis/9.3/asm-analysis-9.3-sources.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm-commons/9.3/asm-commons-9.3.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm-commons/9.3/asm-commons-9.3-sources.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.3/asm-tree-9.3.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm-tree/9.3/asm-tree-9.3-sources.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm-util/9.3/asm-util-9.3.jar",
+            "https://repo.maven.apache.org/maven2/org/ow2/asm/asm-util/9.3/asm-util-9.3-sources.jar",
+            "https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.9.0/gson-2.9.0.jar",
+            "https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.9.0/gson-2.9.0-sources.jar",
+            "https://repo.maven.apache.org/maven2/org/tinylog/tinylog-api/2.4.1/tinylog-api-2.4.1.jar",
+            "https://repo.maven.apache.org/maven2/org/tinylog/tinylog-api/2.4.1/tinylog-api-2.4.1-sources.jar",
+            "https://repo.maven.apache.org/maven2/org/tinylog/tinylog-impl/2.4.1/tinylog-impl-2.4.1.jar",
+            "https://repo.maven.apache.org/maven2/org/tinylog/tinylog-impl/2.4.1/tinylog-impl-2.4.1-sources.jar",
+            "https://maven.fabricmc.net/net/fabricmc/mapping-io/0.3.0/mapping-io-0.3.0.jar",
+            "https://maven.fabricmc.net/net/fabricmc/mapping-io/0.3.0/mapping-io-0.3.0-sources.jar",
+            "https://maven.fabricmc.net/net/fabricmc/tiny-remapper/0.8.2/tiny-remapper-0.8.2.jar",
+            "https://maven.fabricmc.net/net/fabricmc/tiny-remapper/0.8.2/tiny-remapper-0.8.2-sources.jar",
+            "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/23.0.0/annotations-23.0.0.jar",
+            "https://repo.maven.apache.org/maven2/org/jetbrains/annotations/23.0.0/annotations-23.0.0-sources.jar"
+    };
+
     public static void main(String[] args) throws Throwable {
-        System.out.println("Using brachyura bootstrap " + VERSION);
+        // assume the path where the jar is the project source
         // https://stackoverflow.com/a/2837287
-        Path projectPath = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
+        URL thisJar = Main.class.getProtectionDomain().getCodeSource().getLocation();
+        Path thisJarPath = Paths.get(thisJar.toURI());
+
+        // use -DprojectDir to overwrite the project dir base, relative to cwd, otherwise it will use the location of the jar
+        String projectDir = System.getProperty("projectDir", null);
+        Path projectPath = projectDir == null ? thisJarPath.getParent() : Paths.get(projectDir);
+
         Files.createDirectories(BOOTSTRAP_DIR);
-        Path conf = projectPath.resolve("brachyurabootstrapconf.txt");
-        List<Path> classpath = new ArrayList<>();
-        BufferedReader confReader = null;
-        try {
-            if (Files.isRegularFile(conf)) {
-                confReader = Files.newBufferedReader(conf);
-            } else {
-                InputStream confis = Main.class.getResourceAsStream("/brachyurabootstrapconf.txt");
-                if (confis == null) {
-                    throw new RuntimeException("Unable to find brachyurabootstrapconf.txt");
-                }
-                confReader = new BufferedReader(new InputStreamReader(confis));
-            }
-            int confVersion = Integer.parseInt(confReader.readLine());
-            if (confVersion != VERSION) {
-                throw new RuntimeException("Unsupported config version " + confVersion + ". Supported version is " + VERSION + " you need to update or downgrade bootstrap jar to use this brachyura version.");
-            }
-            String line = null;
-            while ((line = confReader.readLine()) != null) {
-                String[] a = line.split("\t");
-                URL url = new URL(a[0].trim());
-                String hash = a[1].trim();
-                String fileName = a[2].trim();
-                boolean isjar = Boolean.parseBoolean(a[3].trim());
-                Path download = getDownload(url, hash, fileName);
-                if (isjar) classpath.add(download);
-            }
-        } finally {
-            if (confReader != null) {
-                confReader.close();
+        List<Path> classpathPaths = new ArrayList<>();
+        List<URL> classpath = new ArrayList<>();
+
+        for (String lib : LIBS) {
+            URL url = new URL(lib);
+            String fileName = lib.substring(lib.lastIndexOf('/') + 1);
+            boolean isJar = !lib.endsWith("-sources.jar");
+            Path download = getDownload(url, fileName);
+
+            if (isJar) {
+                classpathPaths.add(download);
+                classpath.add(download.toUri().toURL());
             }
         }
-        URL[] urls = new URL[classpath.size()];
-        for (int i = 0; i < classpath.size(); i++) {
-            urls[i] = classpath.get(i).toUri().toURL();
-        }
+
+        // allows us to load BrachyuraEntry
+        classpathPaths.add(thisJarPath);
+        classpath.add(thisJar);
+
+        // class loader with the dependencies
         // https://kostenko.org/blog/2019/06/runtime-class-loading.html
-        URLClassLoader classLoader = new URLClassLoader(urls, ClassLoader.getSystemClassLoader());
-        Thread.currentThread().setContextClassLoader(classLoader);
-        Class entry = Class.forName("io.github.coolcrabs.brachyura.project.BrachyuraEntry", true, classLoader);
-        MethodHandles.publicLookup().findStatic(
-            entry,
-            "main",
-            MethodType.methodType(void.class, String[].class, Path.class, List.class)
-        )
-        .invokeExact(args, projectPath, classpath);
-    }
-
-    static Path getDownload(URL url, String hash, String fileName) throws Exception {
-        if ("file".equals(url.getProtocol())) return Paths.get(url.toURI()); // For debug usage
-        Path target = BOOTSTRAP_DIR.resolve(fileName);
-        if (!Files.isRegularFile(target)) {
-            Path tempFile = Files.createTempFile(BOOTSTRAP_DIR, hash, ".tmp");
-            try {
-                MessageDigest md = MessageDigest.getInstance("SHA-1");
-                try (InputStream is = new DigestInputStream(url.openStream(), md)) {
-                    Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                }
-                String actualHash = toHexHash(md.digest());
-                if (hash.equalsIgnoreCase(actualHash)) {
-                    Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE);
-                } else {
-                    throw new RuntimeException("Incorrect hash expected " + hash + " got " + actualHash);
-                }
-            } finally {
-                Files.deleteIfExists(tempFile);
+        // this getParent() here makes it so that that class loader doesn't know our jar already
+        URLClassLoader classLoader = new URLClassLoader(classpath.toArray(new URL[0]), ClassLoader.getSystemClassLoader().getParent()) {
+            @Override
+            public String toString() {
+                return "BrachyuraBootstrapClassLoader@".concat(super.toString());
             }
-        }
+        };
+        Thread.currentThread().setContextClassLoader(classLoader);
 
-        return target;
+        // setup EntryGlobals
+        Class<?> entryGlobals = Class.forName("io.github.coolcrabs.brachyura.project.EntryGlobals", true, classLoader);
+        Method m = entryGlobals.getDeclaredMethod("set", Path.class, List.class); // Path, List<Path>
+        m.setAccessible(true);
+        m.invoke(null, projectPath, classpathPaths);
+
+        // call the entry
+        Class<?> entry = Class.forName("io.github.coolcrabs.brachyura.project.BrachyuraEntry", true, classLoader);
+        MethodHandles.publicLookup().findStatic(
+                entry,
+                "main",
+                MethodType.methodType(void.class, String[].class)
+        ).invokeExact(args);
     }
 
-    static final String HEXES = "0123456789ABCDEF";
+    static Path getDownload(URL url, String fileName) throws Throwable {
+        switch (url.getProtocol()) {
+            case "file": {
+                return Paths.get(url.toURI());
+            }
+            case "https": {
+                Path target = BOOTSTRAP_DIR.resolve(fileName);
+                if (!Files.isRegularFile(target)) {
+                    Path tempFile = Files.createTempFile(fileName, ".tmp"); // in /tmp
+                    try (InputStream is = url.openStream()) {
+                        Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                        Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE);
+                    } finally {
+                        Files.deleteIfExists(tempFile);
+                    }
+                }
 
-    // https://www.rgagnon.com/javadetails/java-0596.html
-    public static String toHexHash(byte[] hash) {
-        if (hash == null) {
-            return null;
+                return target;
+            }
+            default:
+                throw new RuntimeException("Url doesn't use https or file: " + url + ", can't provide security.");
         }
-        final StringBuilder hex = new StringBuilder(2 * hash.length);
-        for (final byte b : hash) {
-            hex.append(HEXES.charAt((b & 0xF0) >> 4)).append(HEXES.charAt((b & 0x0F)));
-        }
-        return hex.toString();
     }
 }
