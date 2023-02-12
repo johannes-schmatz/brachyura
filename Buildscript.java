@@ -16,6 +16,7 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -87,18 +88,8 @@ public class Buildscript {
     }
 
     public static void main(String[] args) throws Throwable {
-        //TODO:
-        // basically have this create a jar that contains all the source files, output this as brachyura.jar
-        // then we can let brachyura.jar do the stuff about ide modules and stuff
-        // this needs brachyura.jar as a dep for the buildscript module, brachyura should link itself as a dep for buildscript
-        // what about integrating the buildscript/src/main/java/Buildscript into brachyura, as it's _needed_ there anyways?
-        // - this would reduce the needing of a special linking
-
-        Set<Path> dependencies = new LinkedHashSet<>();
-        getModule(ROOT.resolve("brachyura"), dependencies);
-
-        List<Path> classpath = new ArrayList<>(dependencies.size());
-        classpath.addAll(dependencies);
+        // compile
+        List<Path> classpath = get();
 
         URL[] urls = new URL[classpath.size()];
         for (int i = 0; i < classpath.size(); i++) {
@@ -123,146 +114,6 @@ public class Buildscript {
                 "main",
                 MethodType.methodType(void.class, String[].class)
         ).invokeExact(args);
-    }
-
-    public static final HashSet<Path> CURRENT_COMPILATIONS = new HashSet<>();
-    public static Path getModule(Path baseDir, Set<Path> toRun) throws Throwable {
-        String name = baseDir.getFileName().toString();
-        Path buildDir = BUILD.resolve(name);
-
-        List<Path> dependencies;
-        try {
-            if (CURRENT_COMPILATIONS.contains(baseDir)) throw new StackOverflowError("Circular dependency detected: " + baseDir);
-            CURRENT_COMPILATIONS.add(baseDir);
-            dependencies = getDependencies(baseDir, "deps.txt", toRun);
-        } finally {
-            CURRENT_COMPILATIONS.remove(baseDir);
-        }
-
-        // create a unique number that tells us if the files changed
-        MessageDigest md = MessageDigest.getInstance("SHA-512");
-        for (Path p : dependencies) {
-            update(md, p.toString());
-            update(md, Files.getFileAttributeView(p, BasicFileAttributeView.class).readAttributes().lastModifiedTime().toMillis());
-        }
-        try (Stream<Path> s = Files.find(baseDir.resolve("src"), Integer.MAX_VALUE, (p, bfa) -> bfa.isRegularFile())) {
-            s.sorted().forEach(p -> {
-                update(md, p.toString());
-                try {
-                    update(md, Files.getFileAttributeView(p, BasicFileAttributeView.class).readAttributes().lastModifiedTime().toMillis());
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        }
-
-        // we'll use 7 chars for now, like git
-        String hash = toHexHash(md.digest()).substring(0, 7);
-
-        Path buildPath = buildDir.resolve(name + "-" + hash + ".jar");
-
-        if (!Files.exists(buildPath) || Boolean.getBoolean("recompile")) {
-            Files.createDirectories(buildDir);
-            for (File f : buildDir.toFile().listFiles()) deleteDirectory(f);
-
-            System.out.println("Compiling " + name + "...");
-
-            StandardJavaFileManager fm = COMPILER.getStandardFileManager(null, null, null);
-
-            Path sourcesPath = baseDir.resolve("src").resolve("main").resolve("java");
-            Path resourcesDir = baseDir.resolve("src").resolve("main").resolve("resources");
-
-            ArrayList<File> files = new ArrayList<>();
-            try (Stream<Path> s = Files.find(sourcesPath, Integer.MAX_VALUE, (p, bfa) -> bfa.isRegularFile())) {
-                s.forEach(p -> files.add(p.toFile()));
-            }
-
-            Path tmpBuildDir = Files.createTempDirectory("build-" + name); // in /tmp
-            // use a try to ensure that it gets deleted again
-            try {
-                ArrayList<String> args = new ArrayList<>(Arrays.asList("-g", "-d", tmpBuildDir.toString(), "-cp",
-                        dependencies.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator))));
-                compileArgs(args);
-
-                boolean success = COMPILER.getTask(
-                                null,
-                                null,
-                                null,
-                                args,
-                                null,
-                                fm.getJavaFileObjectsFromFiles(files)
-                        ).call();
-                if (!success) throw new RuntimeException("didn't compile: " + name);
-
-                System.out.println("Finished writing classes.");
-
-                // get proper temp file
-                Path jarTmpFile = Files.createTempFile("build-" + name + "-", ".jar");
-                Files.delete(jarTmpFile);
-
-                // use try to ensure the deletion
-                try {
-                    URI jarUri = new URI("jar:" + jarTmpFile.toUri());
-                    try (
-                            FileSystem jarFileSystem = FileSystems.newFileSystem(jarUri, Collections.singletonMap("create", "true"));
-                            Stream<Path> classes = Files.walk(tmpBuildDir);
-                    ) {
-                        classes.forEach(in -> {
-                            Path p = tmpBuildDir.relativize(in);
-
-                            if (p.toString().isEmpty()) return;
-
-                            Path out = jarFileSystem.getPath(p.toString()).toAbsolutePath();
-
-                            // copy into the jar
-                            try {
-                                Files.copy(in, out);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-
-                        if (Files.exists(resourcesDir)) {
-                            try (
-                                    Stream<Path> resources = Files.walk(resourcesDir);
-                            ) {
-                                resources.forEach(in -> {
-                                    Path p = resourcesDir.relativize(in);
-
-                                    if (p.toString().isEmpty()) return;
-
-                                    Path out = jarFileSystem.getPath(p.toString()).toAbsolutePath();
-
-                                    // copy into the jar
-                                    try {
-                                        Files.copy(in, out);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                });
-                            }
-                        }
-                    }
-
-                    Files.move(jarTmpFile, buildPath);
-                } finally {
-                    Files.deleteIfExists(jarTmpFile);
-                }
-            } finally {
-                deleteDirectory(tmpBuildDir.toFile());
-            }
-
-            System.out.println("Finished compiling: " + buildPath);
-        } else {
-            //System.out.println(name + " is up to date");
-        }
-
-        if (toRun != null) {
-            toRun.addAll(dependencies);
-            toRun.add(buildPath);
-        }
-
-        return buildPath;
     }
 
     // https://www.baeldung.com/java-delete-directory
@@ -308,69 +159,274 @@ public class Buildscript {
         return hex.toString();
     }
 
-    public static List<Path> getDependencies(Path baseDir, String depsFileName, Set<Path> toRun) throws Throwable {
-        Path depsFile = baseDir.resolve(depsFileName);
+    private static final String[] exts = {".jar", "-sources.jar"};
+    private static final Map<String, Path> alreadyGotten = new HashMap<>();
 
-        if (!Files.exists(depsFile)) return Collections.emptyList();
+    public static Supplier<Path> lib(String repo, String group, String id, String version) {
+        return () -> libGet(repo, group, id, version);
+    }
 
-        List<Path> r = new ArrayList<>();
-        try (BufferedReader w = Files.newBufferedReader(depsFile)) {
-            String line;
-            while ((line = w.readLine()) != null) {
-                // parse the dependency line
-                // https://maven.example.org org.example:foo:0.1.2
+    private static Path libGet(String repo, String group, String id, String version) {
+        String baseUrl = repo.endsWith("/") ? repo : (repo + "/");
 
-                if (line.startsWith("#")) continue;
+        Path r = null;
+        for (String ext : exts) {
+            String fileName = id + "-" + version + ext;
+            String urlString = baseUrl + group.replace('.', '/') + "/" + id + "/" + version + "/" + fileName;
 
-                if (line.startsWith("./")) {
-                    String localModule = line.substring(2);
+            if (!alreadyGotten.containsKey(urlString)) {
+                Path p = DEPS.resolve(fileName);
+                if (!Files.exists(p)) {
                     try {
-                        Path module = getModule(baseDir.resolve(localModule), toRun);
-                        if (toRun != null) toRun.add(module);
-                        r.add(module);
-                    } catch (Throwable t) {
-                        t.printStackTrace();
-                    }
-                    continue;
-                }
-
-                String[] segments = line.split(" ");
-                if (segments.length < 2) continue;
-
-                String baseUrl = segments[0].endsWith("/") ? segments[0] : segments[0] + "/";
-                String[] mavenId = segments[1].split(":");
-
-                for (String ext : exts) {
-                    String fileName = mavenId[1] + "-" + mavenId[2] + ext;
-                    Path p = DEPS.resolve(fileName);
-                    if (!Files.exists(p)) {
-                        Path tmpPath = Files.createTempFile(fileName,null);
-                        Files.delete(tmpPath);
+                        Path tmp = Files.createTempFile(p.getParent(), null, null);
+                        Files.delete(tmp); // delete as the above line creates files..., TODO: make this use the algo from in there instead and not create a file
 
                         try {
-                            URL url = new URL(baseUrl + mavenId[0].replace('.', '/') + "/" + mavenId[1] + "/" + mavenId[2] + "/" + fileName);
+                            URL url = new URL(urlString);
 
-                            System.out.println("Downloading lib: " + url);
-
-                            if ("http".equals(url.getProtocol())) {
+                            if (!"https".equals(url.getProtocol())) {
                                 System.out.println("WARN: You should use https instead of http!");
                             }
 
+                            System.out.println("Downloading: " + id + " from " + url + " to " + p);
+
                             try (InputStream in = url.openStream()) {
-                                Files.copy(in, tmpPath);
+                                Files.copy(in, tmp);
                             }
-                            Files.move(tmpPath, p);
+                            Files.move(tmp, p);
+
                         } finally {
-                            Files.deleteIfExists(tmpPath);
+                            Files.deleteIfExists(tmp);
                         }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
-                    if (".jar".equals(ext)) r.add(p);
                 }
+                alreadyGotten.put(urlString, p);
+            }
+
+            if (".jar".equals(ext)) {
+                r = alreadyGotten.get(urlString);
             }
         }
 
-        return r;
+        return Objects.requireNonNull(r, "lib somehow is null, shoudln't happen!");
     }
 
-    private static final String[] exts = {".jar", "-sources.jar"};
+    public static Supplier<List<Path>> mod(String name, Supplier<?>... deps) {
+        return () -> {
+            try {
+                return modGet(name, deps);
+            } catch (Exception e) {
+                if (e instanceof RuntimeException) throw (RuntimeException) e;
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    public static List<Path> modGet(String name, Supplier<?>[] deps) throws Exception {
+        // TODO: make this store itself in a global Map<String, List<Path> so that it behaves like a Lazy<>
+
+        Path baseDir = ROOT.resolve(name);
+        Path buildDir = BUILD.resolve(name);
+
+        Set<Path> depsToRun = new LinkedHashSet<>();
+        List<Path> depsToCompile = new ArrayList<>();
+        for (Supplier<?> dep : deps) {
+            Object o = dep.get();
+            if (o instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Path> modDep = (List<Path>) o;
+
+                // for running we need everything
+                depsToRun.addAll(modDep);
+
+                // for compilation we only need the module
+                Path mod = modDep.get(0);
+                depsToCompile.add(mod);
+            } else if (o instanceof Path) {
+                Path libDep = (Path) o;
+
+                // for running we need it
+                depsToRun.add(libDep);
+
+                // for compilation we need it
+                depsToCompile.add(libDep);
+            } else {
+                throw new RuntimeException("Could not get depedency: " + o.getClass() + " cannot be castet to either a List<Path> or Path");
+            }
+        }
+
+        // create a unique number that tells us if the files changed
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
+        for (Path p : depsToCompile) {
+            update(md, p.toString());
+            update(md, Files.getFileAttributeView(p, BasicFileAttributeView.class).readAttributes().lastModifiedTime().toMillis());
+        }
+        try (Stream<Path> s = Files.find(baseDir.resolve("src"), Integer.MAX_VALUE, (p, bfa) -> bfa.isRegularFile())) {
+            s.sorted().forEach(p -> {
+                update(md, p.toString());
+                try {
+                    update(md, Files.getFileAttributeView(p, BasicFileAttributeView.class).readAttributes().lastModifiedTime().toMillis());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        }
+
+        // we'll use 7 chars for now, like git
+        String hash = toHexHash(md.digest()).substring(0, 7);
+
+        Path buildPath = buildDir.resolve(name + "-" + hash + ".jar");
+
+        if (!Files.exists(buildPath) || Boolean.getBoolean("recompile")) {
+            Files.createDirectories(buildDir);
+            for (File f : buildDir.toFile().listFiles()) deleteDirectory(f);
+
+            System.out.println("Compiling " + name + "...");
+
+            StandardJavaFileManager fm = COMPILER.getStandardFileManager(null, null, null);
+
+            Path sourcesPath = baseDir.resolve("src").resolve("main").resolve("java");
+            Path resourcesDir = baseDir.resolve("src").resolve("main").resolve("resources");
+
+            ArrayList<File> files = new ArrayList<>();
+            try (Stream<Path> s = Files.find(sourcesPath, Integer.MAX_VALUE, (p, bfa) -> bfa.isRegularFile())) {
+                s.forEach(p -> files.add(p.toFile()));
+            }
+
+            Path tmpBuildDir = Files.createTempDirectory("build-" + name); // in /tmp
+            // use a try to ensure that it gets deleted again
+            try {
+                ArrayList<String> args = new ArrayList<>(Arrays.asList("-g", "-d", tmpBuildDir.toString(), "-cp",
+                        depsToCompile.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator))));
+                compileArgs(args);
+
+                boolean success = COMPILER.getTask(
+                        null,
+                        null,
+                        null,
+                        args,
+                        null,
+                        fm.getJavaFileObjectsFromFiles(files)
+                ).call();
+                if (!success) throw new RuntimeException("didn't compile: " + name);
+
+                System.out.println("Finished writing classes.");
+
+                // get proper temp file
+                Path jarTmpFile = Files.createTempFile("build-" + name + "-", ".jar");
+                Files.delete(jarTmpFile);
+
+                // use try to ensure the deletion
+                try {
+                    URI jarUri = new URI("jar:" + jarTmpFile.toUri());
+                    try (
+                            FileSystem jarFileSystem = FileSystems.newFileSystem(jarUri, Collections.singletonMap("create", "true"));
+                            Stream<Path> classes = Files.walk(tmpBuildDir);
+                    ) {
+                        // classes
+                        classes.forEach(in -> {
+                            Path p = tmpBuildDir.relativize(in);
+
+                            if (p.toString().isEmpty()) return;
+
+                            Path out = jarFileSystem.getPath(p.toString()).toAbsolutePath();
+
+                            // copy into the jar
+                            try {
+                                Files.copy(in, out);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+
+                        // resources
+                        if (Files.exists(resourcesDir)) {
+                            try (
+                                    Stream<Path> resources = Files.walk(resourcesDir);
+                            ) {
+                                resources.forEach(in -> {
+                                    Path p = resourcesDir.relativize(in);
+
+                                    if (p.toString().isEmpty()) return;
+
+                                    Path out = jarFileSystem.getPath(p.toString()).toAbsolutePath();
+
+                                    // copy into the jar
+                                    try {
+                                        Files.copy(in, out);
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    Files.move(jarTmpFile, buildPath);
+                } finally {
+                    Files.deleteIfExists(jarTmpFile);
+                }
+            } finally {
+                deleteDirectory(tmpBuildDir.toFile());
+            }
+
+            System.out.println("Finished compiling: " + buildPath);
+        } else {
+            //System.out.println(name + " is up to date");
+        }
+
+        List<Path> ret = new ArrayList<>(1 + depsToRun.size());
+        ret.add(buildPath);
+        ret.addAll(depsToRun);
+
+        return ret;
+    }
+
+    public static List<Path> get() {
+        // @formatter:off
+        String sponge_maven = "https://repo.spongepowered.org/repository/maven-public";
+        Supplier<Path> asm                   = lib("https://maven.fabricmc.net",           "org.ow2.asm",          "asm",           "9.3"        );
+        Supplier<Path> asm_commons           = lib("https://maven.fabricmc.net",           "org.ow2.asm",          "asm-commons",   "9.3"        );
+        Supplier<Path> asm_tree              = lib("https://maven.fabricmc.net",           "org.ow2.asm",          "asm-tree",      "9.3"        );
+        Supplier<Path> gson                  = lib("https://repo.maven.apache.org/maven2", "com.google.code.gson", "gson",          "2.9.0"      );
+        Supplier<Path> guava                 = lib("https://repo.maven.apache.org/maven2", "com.google.guava",     "guava",         "31.0.1-jre" );
+        Supplier<Path> jetbrains_annotations = lib("https://repo.maven.apache.org/maven2", "org.jetbrains",        "annotations",   "23.0.0"     );
+        Supplier<Path> mapping_io            = lib("https://maven.fabricmc.net",           "net.fabricmc",         "mapping-io",    "0.3.0"      );
+        Supplier<Path> sponge_mixin          = lib(sponge_maven,                           "org.spongepowered",    "mixin",         "0.8.3"      );
+        Supplier<Path> tiny_remapper         = lib("https://maven.fabricmc.net",           "net.fabricmc",         "tiny-remapper", "0.8.2"      );
+        Supplier<Path> tinylog_api           = lib("https://repo.maven.apache.org/maven2", "org.tinylog",          "tinylog-api",   "2.4.1"      );
+        Supplier<Path> tinylog_impl          = lib("https://repo.maven.apache.org/maven2", "org.tinylog",          "tinylog-impl",  "2.4.1"      );
+        // @formatter:on
+
+
+        Supplier<List<Path>> access_widener = mod(
+                "access-widener",
+                asm
+        );
+        Supplier<List<Path>> brachyura_mixin_compile_extensions = mod(
+                "brachyura-mixin-compile-extensions",
+                sponge_mixin, gson, guava, asm, asm_tree
+        );
+        Supplier<List<Path>> fabricmerge = mod(
+                "fabricmerge",
+                asm, asm_tree
+        );
+        Supplier<List<Path>> fernutil = mod(
+                "fernutil",
+                tinylog_api, tinylog_impl
+        );
+        Supplier<List<Path>> trieharder = mod(
+                "trieharder",
+                mapping_io
+        );
+        Supplier<List<Path>> brachyura = mod(
+                "brachyura",
+                jetbrains_annotations, gson, mapping_io, tiny_remapper, asm, asm_commons, access_widener,
+                brachyura_mixin_compile_extensions, fabricmerge, fernutil, trieharder, tinylog_api, tinylog_impl
+        );
+
+        return brachyura.get();
+    }
 }
