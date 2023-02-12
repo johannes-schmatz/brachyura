@@ -42,7 +42,7 @@ class BuildscriptProject extends BaseJavaProject {
         Tasks t = new Tasks();
         Project p = project.get();
         if (p != null) p.getTasks(t);
-        ArrayList<RunConfigBuilder> runConfigs = new ArrayList<>(t.t.size());
+        List<RunConfigBuilder> runConfigs = new ArrayList<>(t.t.size());
         Path cwd = getProjectDir().resolve("run");
         PathUtil.createDirectories(cwd);
         for (Map.Entry<String, Task> e : t.t.entrySet()) {
@@ -194,7 +194,7 @@ class BuildscriptProject extends BaseJavaProject {
 
         @Override
         public String toString() {
-            return "BuildscriptClassloader@".concat(super.toString());
+            return "BuildscriptClassloader@" + super.toString();
         }
     }
 }

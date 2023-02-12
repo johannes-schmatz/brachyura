@@ -7,8 +7,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-@SuppressWarnings("all")
+//@SuppressWarnings("all")
 class Util {
+    @SuppressWarnings("unchecked")
     static <T extends Throwable> RuntimeException sneak(Throwable t) throws T {
         throw (T)t;
     }

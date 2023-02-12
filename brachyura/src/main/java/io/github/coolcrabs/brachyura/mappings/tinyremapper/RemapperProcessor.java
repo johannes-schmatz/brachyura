@@ -414,6 +414,7 @@ public class RemapperProcessor implements Processor {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
             if (type != BasicFileAttributeView.class) return null;
             return (V) new BasicFileAttributeView() {
@@ -432,13 +433,14 @@ public class RemapperProcessor implements Processor {
                 public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime)
                         throws IOException {
                     // TODO Auto-generated method stub
-                    
+
                 }
-                
+
             };
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options)
                 throws IOException {
             return (A) new BasicFileAttributes() {

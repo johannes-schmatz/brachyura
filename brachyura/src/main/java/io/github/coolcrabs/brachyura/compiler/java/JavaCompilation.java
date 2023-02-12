@@ -128,7 +128,15 @@ public class JavaCompilation {
                     fileManager.extraCp.add(s);
                 }
                 try (LoggerWriter w = new LoggerWriter()) {
-                    CompilationTask compilationTask = compiler.getTask(w, fileManager, BrachyuraDiagnosticListener.INSTANCE, options, null, fileManager.getJavaFileObjectsFromFiles(bruh(sourceFiles)));
+                    options.add("-Xlint:unchecked");
+                    CompilationTask compilationTask = compiler.getTask(
+                            w,
+                            fileManager,
+                            BrachyuraDiagnosticListener.INSTANCE,
+                            options,
+                            null,
+                            fileManager.getJavaFileObjectsFromFiles(bruh(sourceFiles))
+                    );
                     success = compilationTask.call();
                 }
                 if (success) {

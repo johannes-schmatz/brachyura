@@ -2,10 +2,11 @@ package io.github.coolcrabs.brachyura.compiler.java;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileObject;
 
 import org.tinylog.Logger;
 
-enum BrachyuraDiagnosticListener implements DiagnosticListener {
+enum BrachyuraDiagnosticListener implements DiagnosticListener<JavaFileObject> {
     INSTANCE;
 
     @Override

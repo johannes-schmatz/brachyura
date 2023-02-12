@@ -57,12 +57,16 @@ class TinyTinyMappingsReader {
     }
 
     static class TinyTree {
-        String[] namespaces;
-        HashMap<String, TinyClass>[] classmaps;
+        public String[] namespaces;
+        public HashMap<String, TinyClass>[] classmaps;
 
         TinyTree(String[] namespaces) {
             this.namespaces = namespaces;
-            classmaps = new HashMap[namespaces.length];
+
+            @SuppressWarnings("unchecked")
+            HashMap<String, TinyClass>[] m = new HashMap[namespaces.length];
+            classmaps = m;
+
             for (int i = 0; i < classmaps.length; i++) {
                 classmaps[i] = new HashMap<>();
             }
@@ -76,13 +80,13 @@ class TinyTinyMappingsReader {
         }
 
         static class TinyClass {
-            String[] names;
-            ArrayList<TinyMethod> methods = new ArrayList<>();
-            ArrayList<TinyField> fields = new ArrayList<>();
+            public String[] names;
+            public ArrayList<TinyMethod> methods = new ArrayList<>();
+            public ArrayList<TinyField> fields = new ArrayList<>();
 
             static class TinyMethod {
-                String[] name;
-                String desc;
+                public String[] name;
+                public String desc;
 
                 String getDesc(TinyTree tree, int namespace) {
                     return mapDesc(desc, tree, 0, namespace);
@@ -90,8 +94,8 @@ class TinyTinyMappingsReader {
             }
 
             static class TinyField {
-                String[] name;
-                String desc;
+                public String[] name;
+                public String desc;
 
                 String getDesc(TinyTree tree, int namespace) {
                     return mapDesc(desc, tree, 0, namespace);
@@ -109,7 +113,7 @@ class TinyTinyMappingsReader {
 
             while ((clsStart = desc.indexOf('L', searchStart)) >= 0) {
                 int clsEnd = desc.indexOf(';', clsStart + 1);
-                if (clsEnd < 0) throw new IllegalArgumentException();
+                if (clsEnd < 0) throw new IllegalArgumentException("No ; found in descriptor: '" + desc + "'");
 
                 String cls = desc.substring(clsStart + 1, clsEnd);
                 TinyClass tcls = tinyTree.classmaps[src].get(cls);

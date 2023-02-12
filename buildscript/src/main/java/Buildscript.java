@@ -274,6 +274,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 			return Arrays.asList(trieharder, fernutil, fabricmerge, mixinCompileExtensions, accessWidener);
 		}
 	};
+	@Override
 	public IdeModule getBrachyuraIdeModule() {
 		return brachyura.ideModule.get();
 	}

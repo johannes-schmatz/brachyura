@@ -33,7 +33,7 @@ class SimpleJavaProjectTest {
 
             @Override
             public Path getProjectDir() {
-                return PathUtil.CWD.getParent().resolve("testprogram");
+                return PathUtil.CWD.resolve("testprogram");
             }
 
             @Override

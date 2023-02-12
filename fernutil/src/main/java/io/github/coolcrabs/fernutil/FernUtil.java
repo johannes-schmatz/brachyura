@@ -22,6 +22,7 @@ public class FernUtil {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <E extends Throwable> void sneak(Throwable e) throws E {
         throw (E) e;
     }
