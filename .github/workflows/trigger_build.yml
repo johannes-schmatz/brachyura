@@ -1,0 +1,11 @@
+name: Java CI thing
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/build.yml

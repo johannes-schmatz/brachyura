@@ -1,0 +1,41 @@
+name: create a new release
+
+on:
+  push:
+    tags:
+      - '*'
+
+
+jobs:
+  build_release:
+    name: build
+    uses: ./.github/workflows/build.yml
+    
+  release:
+    needs: build_release
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Grab and store version
+        run: |
+          tag_name=$(echo ${{ github.ref }} | grep -oE "[^/]+$")
+          echo "VERSION=$tag_name" >> $GITHUB_ENV
+
+      - name: Package Jar
+        run: |
+          mv build/out.jar build/brachyura-${{ evn.VERSION }}.jar
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          name: Brachyura ${{ env.VERSION }}
+          files: |
+            build/brachyura-${{ env.VERSION }}.jar
+            

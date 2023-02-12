@@ -2,14 +2,15 @@
 
 name: Java CI Thing
 
-on: [push]
+on: [workflow_call]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Set up JDK 8
         uses: actions/setup-java@v2
@@ -19,7 +20,7 @@ jobs:
 
       - name: Build Da Thing
         run: ./build.sh
-        
+
       - name: capture build artifacts
         uses: actions/upload-artifact@v2
         with:
