@@ -59,11 +59,9 @@ public class QmQuiltProjectTest {
     @Test
     void ide() {
         long a = System.currentTimeMillis();
-        proj.getTasks(p -> { // todo: better api
-            if (p.getName().equals("netbeans")) p.doTask(new String[]{});
-            if (p.getName().equals("idea")) p.doTask(new String[]{});
-            if (p.getName().equals("jdt")) p.doTask(new String[]{});
-        });
+        proj.runTask("netbeans");
+        proj.runTask("idea");
+        proj.runTask("jdt");
         long b = System.currentTimeMillis();
         System.out.println(b - a);
     }

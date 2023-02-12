@@ -72,12 +72,9 @@ class FabricProjectTest {
     @Test
     void ide() {
         long a = System.currentTimeMillis();
-        //Todo better api for this?
-        fabricProject.getTasks(p -> {
-            if (p.getName().equals("netbeans")) p.doTask(new String[]{});
-            if (p.getName().equals("idea")) p.doTask(new String[]{});
-            if (p.getName().equals("jdt")) p.doTask(new String[]{});
-        });
+        fabricProject.runTask("netbeans");
+        fabricProject.runTask("idea");
+        fabricProject.runTask("jdt");
         long b = System.currentTimeMillis();
         System.out.println(b - a);
     }
