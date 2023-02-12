@@ -46,7 +46,7 @@ public class QmQuiltProjectTest {
 
         @Override
         public Path getProjectDir() {
-            Path result = PathUtil.CWD.getParent().resolve("test").resolve("quilt").resolve("testmod_qm");
+            Path result = PathUtil.CWD.resolve("test").resolve("quilt").resolve("testmod_qm");
             assertTrue(Files.isDirectory(result)); 
             return result;
         }

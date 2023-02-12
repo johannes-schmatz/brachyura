@@ -35,7 +35,7 @@ public class NoMixinProjectTest {
 
         @Override
         public Path getProjectDir() {
-            Path result = PathUtil.CWD.getParent().resolve("test").resolve("fabric").resolve("mojmap_nomixin");
+            Path result = PathUtil.CWD.resolve("test").resolve("fabric").resolve("mojmap_nomixin");
             assertTrue(Files.isDirectory(result)); 
             return result;
         }

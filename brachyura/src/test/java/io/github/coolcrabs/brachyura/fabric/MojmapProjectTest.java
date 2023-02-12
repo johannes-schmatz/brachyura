@@ -41,7 +41,7 @@ class MojmapProjectTest {
 
         @Override
         public Path getProjectDir() {
-            Path result = PathUtil.CWD.getParent().resolve("test").resolve("fabric").resolve("mojmap");
+            Path result = PathUtil.CWD.resolve("test").resolve("fabric").resolve("mojmap");
             assertTrue(Files.isDirectory(result)); 
             return result;
         }

@@ -41,7 +41,7 @@ class J8FabricProjectTest {
 
         @Override
         public Path getProjectDir() {
-            Path result = PathUtil.CWD.getParent().resolve("testmod");
+            Path result = PathUtil.CWD.resolve("testmod");
             assertTrue(Files.isDirectory(result)); 
             return result;
         }
