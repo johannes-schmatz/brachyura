@@ -10,12 +10,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up JDK 8
         uses: actions/setup-java@v2
         with:
           java-version: '8'
           distribution: 'adopt'
+
       - name: Build Da Thing
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./ghactionsbuild.bash
+        run: ./build.sh
+        
+      - name: capture build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts
+          path: build/
