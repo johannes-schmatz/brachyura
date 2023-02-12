@@ -23,10 +23,6 @@ jobs:
           name: Artifacts
           path: build
 
-      - name: ls
-        run: |
-          ls build/*
-
       - name: Grab and store version
         run: |
           tag_name=$(echo ${{ github.ref }} | grep -oE "[^/]+$")
@@ -34,7 +30,7 @@ jobs:
 
       - name: Package Jar
         run: |
-          mv build/out.jar build/brachyura-${{ env.VERSION }}.jar
+          mv build/* build/brachyura-${{ env.VERSION }}.jar
 
       - name: Create release
         uses: softprops/action-gh-release@v1
