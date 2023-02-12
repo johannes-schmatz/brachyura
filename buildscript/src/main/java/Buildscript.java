@@ -1,4 +1,3 @@
-import java.io.BufferedReader;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,8 +25,9 @@ import io.github.coolcrabs.brachyura.project.BrachyuraBuildscript;
 import io.github.coolcrabs.brachyura.project.java.BaseJavaProject;
 import io.github.coolcrabs.brachyura.project.java.BuildModule;
 import io.github.coolcrabs.brachyura.project.java.SimpleJavaModule;
-import io.github.coolcrabs.brachyura.test.basicbuildscript.MavenRef;
+import io.github.coolcrabs.brachyura.added.basicbuildscript.MavenRef;
 import io.github.coolcrabs.brachyura.util.*;
+import org.tinylog.Logger;
 
 /*
  * mostly taken from
@@ -38,8 +38,6 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 	public static void main(String[] args) {
 
 	}
-
-	// TODO: make this read the deps.txt files from all over the project
 	static final String GROUP = "io.github.coolcrabs";
 
 	// https://junit.org/junit5/docs/current/user-guide/#running-tests-console-launcher
@@ -75,8 +73,9 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 				new MavenRef("https://maven.fabricmc.net", "net.fabricmc", "mapping-io", "0.3.0"),
 				new MavenRef("https://maven.fabricmc.net", "net.fabricmc", "tiny-remapper", "0.8.2"),
 
-				new MavenRef("https://maven.fabricmc.net", "org.ow2.asm", "asm", "9.3"),
-				new MavenRef("https://maven.fabricmc.net", "org.ow2.asm", "asm-commons", "9.3")
+				new MavenRef("https://maven.fabricmc.net", "org.ow2.asm", "asm", "9.3"), // also for access-widener
+				new MavenRef("https://maven.fabricmc.net", "org.ow2.asm", "asm-commons", "9.3"),
+				new MavenRef("https://maven.fabricmc.net", "org.ow2.asm", "asm-tree", "9.3") // for tests
 		};
 
 		List<JavaJarDependency> r = new ArrayList<>(deps.length);
@@ -162,7 +161,8 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		public final Lazy<BJarResult> built = new Lazy<>(this::build);
 		protected BJarResult build() {
 			Path buildLibsDir = PathUtil.resolveAndCreateDir(PathUtil.resolveAndCreateDir(getModuleRoot(), "build"), "libs");
-			Path testSrc = getModuleRoot().resolve("src").resolve("test").resolve("java");
+			// toAbsolutePath is needed, some stuff uses not absolute paths, TODO: check if this is now obsolete
+			Path testSrc = getModuleRoot().resolve("src").resolve("test").resolve("java").normalize().toAbsolutePath();
 			Path outjar = buildLibsDir.resolve(getJarBaseName() + ".jar");
 			Path outjarsources = buildLibsDir.resolve(getJarBaseName() + "-sources.jar");
 			BJarResult r = new BJarResult();
@@ -219,8 +219,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 
 		public final void test() {
 			if (!hasTests()) return;
-			//Logger.info("Testing {}", getModuleName());
-			System.out.println("Testing " +  getModuleName());
+			Logger.info("Testing {}", getModuleName());
 			try {
 				ArrayList<Path> cp = new ArrayList<>();
 				for (JavaJarDependency jdep : dependencies.get()) cp.add(jdep.jar);
@@ -277,6 +276,11 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 	@Override
 	public IdeModule getBrachyuraIdeModule() {
 		return brachyura.ideModule.get();
+	}
+	@Override
+	public List<JavaJarDependency> getOtherDependencies() {
+		// tinylog-api, tinylog-impl, annotations should be enough!
+		return bdeps.get();
 	}
 
 	Lazy<JavaJarDependency> mappingIo = new Lazy<>(() -> Maven.getMavenJarDep("https://maven.fabricmc.net/", new MavenId("net.fabricmc", "mapping-io", "0.3.0")));
@@ -338,7 +342,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 	public final BJavaModule fabricmerge = new BJavaModule() {
 		@Override
 		public boolean hasTests() {
-			return false;
+			return true;
 		}
 
 		@Override
@@ -439,11 +443,12 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 
 		PathUtil.mergeJars(allOutJar, jars);
 
-		/*if (!Boolean.getBoolean("skiptests")) {
+		//if (!Boolean.getBoolean("skiptests")) {
+		if (Boolean.getBoolean("tests")) {
 			for (BJavaModule javaModule : modules) {
 				javaModule.test();
 			}
-		}*/
+		}
 	}
 
 	void publish() {

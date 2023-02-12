@@ -16,7 +16,7 @@ class InputFiles {
 
     public void add(ProcessingSource s) {
         s.getInputs((in, id) -> {
-            files.put(id.path, new InputFile(in, id));
+            files.put(id.path.replace('/', '.'), new InputFile(in, id));
         });
     }
 
@@ -28,7 +28,7 @@ class InputFiles {
             private InputFile advance() {
                 while (c.hasNext()) {
                     Entry<String, InputFile> e = c.next();
-                    if (!e.getKey().startsWith(packageName.replace('.', '/'))) {
+                    if (!e.getKey().startsWith(packageName)) {
                         return null; // We've gone past this package
                     }
                     if (!recurse && e.getKey().lastIndexOf('/') > packageName.length()) {

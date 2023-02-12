@@ -66,7 +66,12 @@ class BuildscriptProject extends BaseJavaProject {
                 .root(getProjectDir())
                 .sourcePath(getSrcDir());
         if (p instanceof BrachyuraBuildscript) {
-            b.dependencyModules(((BrachyuraBuildscript) p).getBrachyuraIdeModule());
+            BrachyuraBuildscript buildscript = (BrachyuraBuildscript) p;
+
+            b.dependencyModules(buildscript.getBrachyuraIdeModule());
+
+            List<JavaJarDependency> deps = buildscript.getOtherDependencies();
+            if (deps != null) b.dependencies(deps);
         } else {
             b.dependencies(this::getIdeDependencies);
         }
