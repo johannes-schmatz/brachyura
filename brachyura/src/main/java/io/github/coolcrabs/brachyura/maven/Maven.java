@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+import io.github.coolcrabs.brachyura.added.basicbuildscript.MavenRef;
 import org.jetbrains.annotations.Nullable;
 import org.tinylog.Logger;
 
@@ -28,6 +29,10 @@ public class Maven {
 
     public static final String MAVEN_CENTRAL = "https://repo.maven.apache.org/maven2/";
     public static final String MAVEN_LOCAL = PathUtil.HOME.resolve(".m2").resolve("repository").toUri().toString(); // This is wrong, too bad https://stackoverflow.com/a/47833316
+
+    public static JavaJarDependency getMavenJarDep(MavenRef dep) {
+        return getMavenJarDep(dep.repo, dep.mavenId);
+    }
 
     public static JavaJarDependency getMavenJarDep(String mavenRepo, MavenId dep) {
         return (JavaJarDependency) getMavenDep(mavenRepo, dep, ".jar", true, true);

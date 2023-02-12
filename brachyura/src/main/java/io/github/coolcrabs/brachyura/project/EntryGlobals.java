@@ -11,7 +11,8 @@ public class EntryGlobals {
 
     // called by bootstrap to set it
     private static void set(Path projectDir, List<Path> buildscriptClasspath) {
-        EntryGlobals.projectDir = projectDir;
+        // normalize here, as this makes the path not have /././ in it, which destroys .startsWith comparisons (brachyuras own Buildscript)
+        EntryGlobals.projectDir = projectDir.normalize();
         EntryGlobals.buildscriptClasspath = buildscriptClasspath;
     }
 

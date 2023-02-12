@@ -106,7 +106,7 @@ public class Main {
             case "https": {
                 Path target = BOOTSTRAP_DIR.resolve(fileName);
                 if (!Files.isRegularFile(target)) {
-                    Path tempFile = Files.createTempFile(fileName, ".tmp"); // in /tmp
+                    Path tempFile = Files.createTempFile(BOOTSTRAP_DIR, fileName, ".tmp");
                     try (InputStream is = url.openStream()) {
                         Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
                         Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE);

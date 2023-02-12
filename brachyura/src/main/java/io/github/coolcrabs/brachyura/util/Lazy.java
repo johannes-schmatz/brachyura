@@ -57,33 +57,29 @@ public final class Lazy<T> implements Supplier<T> {
         }
     }
 
+    // set this to true to make getParallel keep the order and forward any exceptions in order, for debugging
+    private static final boolean DO_SEQUENTIAL = Boolean.getBoolean("lazy.sequential");
     public static <T> List<T> getParallel(Collection<Lazy<T>> things) {
-        return getParallel(things.toArray(new Lazy[0]));
-    }
-
-    public static <T> List<T> getParallel(Lazy<T>... things) {
-        if (true) {
-            List<T> l = new ArrayList<>(things.length);
+        if (DO_SEQUENTIAL) {
+            List<T> l = new ArrayList<>(things.size());
             for (Lazy<T> t : things) {
                 l.add(t.get());
             }
             return l;
         }
 
-        int n = things.length;
+        int n = things.size();
 
         int[] slots = new int[n];
         List<ForkJoinTask<T>> tasks = new ArrayList<>(n);
         List<T> results = new ArrayList<>(n);
 
-        for (int i = 0; i < n; i++) {
-            Lazy<T> thing = things[i];
-
-            T v = thing.value;
+        int ctr = 0;
+        for (Lazy<T> thing : things) {
             boolean isThere = thing.isThere;
 
             if (isThere) {
-                results.add(v);
+                results.add(thing.value);
             } else {
                 ForkJoinTask<T> task = thing.task;
                 if (task == null) {
@@ -102,8 +98,10 @@ public final class Lazy<T> implements Supplier<T> {
                     }
                 }
                 results.add(null);
-                slots[i] = i;
+                slots[ctr] = ctr;
                 tasks.add(task);
+
+                ctr++;
             }
         }
         for (int i = 0; i < n; i++) {
