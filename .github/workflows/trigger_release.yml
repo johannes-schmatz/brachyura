@@ -27,7 +27,7 @@ jobs:
 
       - name: Package Jar
         run: |
-          mv build/out.jar build/brachyura-${{ evn.VERSION }}.jar
+          mv build/out.jar build/brachyura-${{ env.VERSION }}.jar
 
       - name: Create release
         uses: softprops/action-gh-release@v1
