@@ -252,6 +252,7 @@ public enum Intellijank implements Ide {
                     modules.add(ideProject);
                     modules.addAll(run.additionalModulesClasspath);
                     for (IdeModule m : modules) {
+                        // TODO: fix this
                         cp.add(projectDir.resolve(".brachyura").resolve("ideaout").resolve("production").resolve(m.name)); // ???
                     }
                     StringBuilder cpbuilder = new StringBuilder();
