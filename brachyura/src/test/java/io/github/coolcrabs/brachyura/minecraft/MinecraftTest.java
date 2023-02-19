@@ -96,7 +96,7 @@ class MinecraftTest {
     }
 
     @Test
-    void ojmap1_16() {
+    void mojmap1_16() {
         MappingTree mappings = Minecraft.getMojmap(Minecraft.getVersion("1.16.5"));
         System.out.println(mappings.getNamespaceId(Namespaces.OBF));
         assertEquals(-1, mappings.getNamespaceId(Namespaces.OBF));

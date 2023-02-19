@@ -15,6 +15,7 @@ import org.tinylog.Logger;
 
 import java.io.File;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,6 +36,21 @@ class BuildscriptProject extends BaseJavaProject {
     @Override
     public void getRunConfigTasks(Consumer<Task> p) {
         //noop
+
+        // new project task
+        p.accept(Task.of("init", () -> {
+            initNewEmptyProject(EntryGlobals.getProjectDir());
+        }));
+    }
+
+    private static void initNewEmptyProject(Path projectDir) {
+        // for now that's all you need to set up a new project
+        PathUtil.copyTemplateFromResources("buildscript/src/main/java/Buildscript.java", projectDir);
+        PathUtil.copyTemplateFromResources("src/main/resources/fabric.mod.json", projectDir);
+        PathUtil.copyTemplateFromResources("src/main/resources/modid.mixins.json", projectDir);
+        PathUtil.copyTemplateFromResources("src/main/resources/assets/modid/icon.png", projectDir);
+        PathUtil.copyTemplateFromResources("src/main/java/net/fabricmc/example/ExampleMod.java", projectDir);
+        PathUtil.copyTemplateFromResources("src/main/java/net/fabricmc/example/mixin/ExampleMixin.java", projectDir);
     }
 
     @Override
@@ -84,37 +100,44 @@ class BuildscriptProject extends BaseJavaProject {
     @Nullable
     public Project createProject() {
         try {
-            ClassLoader b = getBuildscriptClassLoader();
-            if (b == null) return null;
-            Class<?> projectclass = Class.forName("Buildscript", true, b);
-            if (Project.class.isAssignableFrom(projectclass)) {
-                return (Project) projectclass.getDeclaredConstructor().newInstance();
-            } else {
-                Logger.warn("Buildscript must be instance of Project");
-                return null;
-            }
+            return createProjectThrowing();
+        } catch (ClassCastException e) {
+            Logger.warn("Buildscript must be instance of Project");
+            Logger.warn(e);
+        } catch (CompilationFailedException e) {
+            Logger.warn("Buildscript compilation failed!");
+            Logger.warn(e);
         } catch (Exception e) {
             Logger.warn("Error getting project:");
             Logger.warn(e);
-            return null;
         }
+        return null;
     }
 
-    @Nullable
+    /**
+     * @return the instance of the Project
+     * @throws ClassCastException if the project doesn't extend the Project class
+     */
+    public Project createProjectThrowing() throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, InstantiationException,
+            IllegalAccessException {
+        ClassLoader b = getBuildscriptClassLoader();
+        Class<?> projectClass = Class.forName("Buildscript", true, b);
+        return (Project) projectClass.getDeclaredConstructor().newInstance();
+    }
+
+    /**
+     * @return a class loader that can load the Buildscript class
+     * @throws CompilationFailedException if the compilation isn't successful
+     */
     public ClassLoader getBuildscriptClassLoader() {
-        try {
-            JavaCompilationResult compilation = new JavaCompilation()
-                .addSourceDir(getSrcDir())
-                .addClasspath(getCompileDependencies())
-                .addOption(JvmUtil.compileArgs(JvmUtil.CURRENT_JAVA_VERSION, 8))
-                .compile();
-            BuildscriptClassloader r = new BuildscriptClassloader(BuildscriptProject.class.getClassLoader(), getSrcDir());
-            compilation.getInputs(r);
-            return r;
-        } catch (CompilationFailedException e) {
-            Logger.warn("Buildscript compilation failed!");
-            return null;
-        }
+        JavaCompilationResult compilation = new JavaCompilation()
+            .addSourceDir(getSrcDir())
+            .addClasspath(getCompileDependencies())
+            .addOption(JvmUtil.compileArgs(JvmUtil.CURRENT_JAVA_VERSION, 8))
+            .compile();
+        BuildscriptClassloader r = new BuildscriptClassloader(BuildscriptProject.class.getClassLoader(), getSrcDir());
+        compilation.getInputs(r);
+        return r;
     }
 
     public List<JavaJarDependency> getIdeDependencies() {
