@@ -74,7 +74,7 @@ public abstract class SimpleQuiltProject extends SimpleFabricProject {
         throw new UnknownJsonException("Unable to find aw named:" + aw);
     }
 
-    private Lazy<String[]> qmjParseThingy = new Lazy<>(() -> {
+    private final Lazy<String[]> qmjParseThingy = new Lazy<>(() -> {
         try {
             Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
             JsonObject quiltModJson;
@@ -86,6 +86,8 @@ public abstract class SimpleQuiltProject extends SimpleFabricProject {
                     break;
                 }
             }
+            if (qmj == null) throw new IllegalStateException("Cannot find quilt.mod.json, check if it exists.");
+
             try (BufferedReader reader = PathUtil.newBufferedReader(qmj)) {
                 quiltModJson = gson.fromJson(reader, JsonObject.class);
             }

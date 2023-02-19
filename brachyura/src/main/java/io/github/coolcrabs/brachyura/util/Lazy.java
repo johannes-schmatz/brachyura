@@ -3,7 +3,6 @@ package io.github.coolcrabs.brachyura.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.Supplier;
 
@@ -15,7 +14,7 @@ public final class Lazy<T> implements Supplier<T> {
     private volatile T value;
     private volatile ForkJoinTask<T> task;
     private final Supplier<T> supplier;
-    private final String caller;
+    private final String creator;
 
     public static <T> Lazy<T> of(Supplier<T> x) {
         if (x instanceof Lazy) return (Lazy<T>) x;
@@ -26,14 +25,14 @@ public final class Lazy<T> implements Supplier<T> {
         this(supplier, Util.getCaller());
     }
 
-    private Lazy(Supplier<T> supplier, String caller) {
+    private Lazy(Supplier<T> supplier, String creator) {
         this.supplier = supplier;
-        this.caller = caller;
+        this.creator = creator;
     }
 
     @Override
     public String toString() {
-        return super.toString() + "[caller=" + caller + "]";
+        return "Lazy[creator=" + creator + "]@" + Integer.toHexString(hashCode());
     }
 
     @Override

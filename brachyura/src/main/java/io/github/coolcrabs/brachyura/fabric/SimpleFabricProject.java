@@ -127,7 +127,7 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
         return context.get().createMojmap();
     }
 
-    private Lazy<String[]> fmjParseThingy = new Lazy<>(() -> {
+    private final Lazy<String[]> fmjParseThingy = new Lazy<>(() -> {
         try {
             Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
             JsonObject fabricModJson;
@@ -139,6 +139,8 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
                     break;
                 }
             }
+            if (fmj == null) throw new IllegalStateException("Cannot find fabric.mod.json, check if it exists.");
+
             try (BufferedReader reader = PathUtil.newBufferedReader(fmj)) {
                 fabricModJson = gson.fromJson(reader, JsonObject.class);
             }

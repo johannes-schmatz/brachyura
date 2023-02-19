@@ -25,7 +25,11 @@ public class Project {
     }
 
     public final void runTask(String name, String... args) {
-        tasks.get().get(name).doTask(args);
+        try {
+            tasks.get().get(name).doTask(args);
+        } catch (Throwable t) {
+            throw new RuntimeException("Task " + name + " failed", t);
+        }
     }
 
     public Path getProjectDir() {

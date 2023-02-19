@@ -1,10 +1,7 @@
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -161,8 +158,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		public final Lazy<BJarResult> built = new Lazy<>(this::build);
 		protected BJarResult build() {
 			Path buildLibsDir = PathUtil.resolveAndCreateDir(PathUtil.resolveAndCreateDir(getModuleRoot(), "build"), "libs");
-			// toAbsolutePath is needed, some stuff uses not absolute paths, TODO: check if this is now obsolete
-			Path testSrc = getModuleRoot().resolve("src").resolve("test").resolve("java").normalize().toAbsolutePath();
+			Path testSrc = getModuleRoot().resolve("src").resolve("test").resolve("java");
 			Path outjar = buildLibsDir.resolve(getJarBaseName() + ".jar");
 			Path outjarsources = buildLibsDir.resolve(getJarBaseName() + "-sources.jar");
 			BJarResult r = new BJarResult();
@@ -176,25 +172,33 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 						AtomicZipProcessingSink testJarSourcesSink = new AtomicZipProcessingSink(testoutjarsources);
 				) {
 					new ProcessorChain().apply(jarSink, Arrays.stream(getResourceDirs()).map(DirectoryProcessingSource::new).collect(Collectors.toList()));
+
 					Path testRes = getModuleRoot().resolve("src").resolve("test").resolve("resources");
 					if (Files.exists(testRes)) new ProcessorChain().apply(testJarSink, new DirectoryProcessingSource(testRes));
+
 					JavaCompilationResult comp = compilationResult.get();
 					comp.getInputs((in, id) -> {
-						if (comp.getSourceFile(id).startsWith(testSrc)) {
+						Path sourceFile = comp.getSourceFile(id);
+						Path p1 = Objects.requireNonNull(sourceFile, "sourceFile").normalize().toAbsolutePath();
+						if (p1.startsWith(testSrc)) {
 							testJarSink.sink(in, id);
 						} else {
 							jarSink.sink(in, id);
 						}
 					});
+
 					for (Path p : getSrcDirs()) {
 						new DirectoryProcessingSource(p).getInputs(jarSourcesSink);
 					}
 					new DirectoryProcessingSource(testSrc).getInputs(testJarSourcesSink);
+
 					comp.getOutputLocation(StandardLocation.SOURCE_OUTPUT, jarSourcesSink);
+
 					jarSink.commit();
 					jarSourcesSink.commit();
 					testJarSink.commit();
 					testJarSourcesSink.commit();
+
 					r.tests = new JavaJarDependency(testoutjar, testoutjarsources, null);
 				}
 			} else {
