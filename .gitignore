@@ -21,3 +21,5 @@ trieharder/build/libs
 # Buildscript.java building
 Buildscript.class
 
+# test directories
+test/project_init_test
