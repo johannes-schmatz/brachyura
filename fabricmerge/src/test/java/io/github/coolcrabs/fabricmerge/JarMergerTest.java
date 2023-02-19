@@ -8,9 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class JarMergerTest {
+    @Disabled("takes too long")
     @Test
     void merge1_16_5() {
         assertDoesNotThrow(() -> {

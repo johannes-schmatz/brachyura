@@ -8,11 +8,9 @@ import org.junit.jupiter.api.Test;
 import io.github.coolcrabs.brachyura.bootstrap.Main;
 
 class MainTest {
-    @Disabled
-    @Test
-    void b() {
-        assertDoesNotThrow(() -> {
-            Main.main(new String[] {});
-        });
-    }
+	@Disabled
+	@Test
+	void b() {
+		assertDoesNotThrow(() -> Main.main(new String[0]));
+	}
 }

@@ -405,7 +405,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 	public final BJavaModule bootstrap = new BJavaModule() {
 		@Override
 		public boolean hasTests() {
-			return false;
+			return true;
 		}
 
 		@Override
@@ -420,7 +420,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 
 		@Override
 		protected List<JavaJarDependency> createDependencies() {
-			return Collections.emptyList();
+			return junit.get();
 		}
 	};
 
