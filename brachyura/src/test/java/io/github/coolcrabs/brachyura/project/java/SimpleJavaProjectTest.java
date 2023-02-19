@@ -8,7 +8,6 @@ import io.github.coolcrabs.brachyura.maven.MavenId;
 
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

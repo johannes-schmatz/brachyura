@@ -126,11 +126,10 @@ public class CommentStringSkipper implements ReplacerCharIn {
                 if (r3 == '"') {
                     w(r3);
                     state = State.TEXT;
-                    return -2;
                 } else {
                     buffer(r3);
-                    return -2;
                 }
+                return -2;
             } else {
                 state = State.STRING;
                 buffer(r2);

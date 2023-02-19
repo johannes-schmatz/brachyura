@@ -3,9 +3,6 @@ package io.github.coolcrabs.brachyura.util;
 import java.util.ArrayList;
 
 public class CloseableArrayList extends ArrayList<AutoCloseable> implements AutoCloseable {
-    public CloseableArrayList() {
-        super();
-    }
 
     @Override
     public void close() {

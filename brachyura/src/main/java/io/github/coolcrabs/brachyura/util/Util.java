@@ -8,6 +8,7 @@ public class Util {
         throw (T)t;
     }
 
+    @SuppressWarnings("EmptyMethod")
     public static <T extends Throwable> void unsneak() throws T {
         //noop
     }

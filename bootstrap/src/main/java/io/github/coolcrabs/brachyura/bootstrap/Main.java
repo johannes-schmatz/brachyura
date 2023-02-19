@@ -78,7 +78,7 @@ public class Main {
         URLClassLoader classLoader = new URLClassLoader(classpath.toArray(new URL[0]), ClassLoader.getSystemClassLoader().getParent()) {
             @Override
             public String toString() {
-                return "BrachyuraBootstrapClassLoader@".concat(super.toString());
+                return "BrachyuraBootstrapClassLoader@" + Integer.toHexString(hashCode());
             }
         };
         Thread.currentThread().setContextClassLoader(classLoader);

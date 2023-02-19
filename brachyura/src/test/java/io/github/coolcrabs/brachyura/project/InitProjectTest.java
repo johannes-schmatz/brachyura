@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class InitProjectTest {
-	Path projectDir = PathUtil.CWD.resolve("test").resolve("project_init_test");;
+	Path projectDir = PathUtil.CWD.resolve("test").resolve("project_init_test");
 	BuildscriptProject buildscriptProject = new BuildscriptProject() {
 
 	};

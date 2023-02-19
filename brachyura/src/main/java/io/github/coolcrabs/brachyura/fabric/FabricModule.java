@@ -74,7 +74,7 @@ public abstract class FabricModule extends BuildModule {
             JavaCompilation compilation0 = new JavaCompilation()
                 .addOption(JvmUtil.compileArgs(JvmUtil.CURRENT_JAVA_VERSION, getJavaVersion()))
                 .addOption(
-                    "-AbrachyuraInMap=" + writeMappings4FabricStuff().toAbsolutePath().toString(),
+                    "-AbrachyuraInMap=" + writeMappings4FabricStuff().toAbsolutePath(),
                     "-AbrachyuraOutMap=" + mixinOut, // Remaps shadows etc
                     "-AbrachyuraInNamespace=" + Namespaces.NAMED,
                     "-AbrachyuraOutNamespace=" + Namespaces.INTERMEDIARY,

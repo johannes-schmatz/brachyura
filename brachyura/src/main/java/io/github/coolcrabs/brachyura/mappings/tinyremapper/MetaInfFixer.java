@@ -18,7 +18,7 @@ import io.github.coolcrabs.brachyura.util.ByteArrayOutputStreamEx;
 import net.fabricmc.tinyremapper.TinyRemapper;
 
 // https://github.com/FabricMC/tiny-remapper/blob/master/src/main/java/net/fabricmc/tinyremapper/MetaInfFixer.java
-// Rewritten since tr's is heavily nio tied atm
+// Rewritten since tinyremapper's is heavily nio tied atm
 public class MetaInfFixer implements Processor {
     final TinyRemapper remapper;
 
@@ -71,9 +71,9 @@ public class MetaInfFixer implements Processor {
             String val = mainAttrs.getValue(Attributes.Name.MAIN_CLASS);
             if (val != null)
                 mainAttrs.put(Attributes.Name.MAIN_CLASS, mapFullyQualifiedClassName(val, remapper));
-            val = mainAttrs.getValue("Launcher-Agent-Class");
-            if (val != null)
-                mainAttrs.putValue("Launcher-Agent-Class", mapFullyQualifiedClassName(val, remapper));
+            String val1 = mainAttrs.getValue("Launcher-Agent-Class");
+            if (val1 != null)
+                mainAttrs.putValue("Launcher-Agent-Class", mapFullyQualifiedClassName(val1, remapper));
         }
         mainAttrs.remove(Attributes.Name.SIGNATURE_VERSION);
         for (Iterator<Attributes> it = manifest.getEntries().values().iterator(); it.hasNext();) {

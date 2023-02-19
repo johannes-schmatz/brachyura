@@ -34,9 +34,9 @@ public class JvmUtil {
         if (exe.exists()) {
             CURRENT_JAVA_EXECUTABLE = exe.getAbsolutePath();
         } else {
-            exe = new File(bin, "java.exe");
-            if (exe.exists()) {
-                CURRENT_JAVA_EXECUTABLE = exe.getAbsolutePath();
+            File exe1 = new File(bin, "java.exe");
+            if (exe1.exists()) {
+                CURRENT_JAVA_EXECUTABLE = exe1.getAbsolutePath();
             } else {
                 // Give Up
                 CURRENT_JAVA_EXECUTABLE = "java";
@@ -55,7 +55,7 @@ public class JvmUtil {
 
     public static String[] compileArgs(int compilerversion, int targetversion) {
         if (compilerversion == targetversion) return NO_ARGS;
-        if (compilerversion >= 9 && targetversion >= 7) return new String[] {"--release", String.valueOf(targetversion)}; // Doesn't accept 1.8 etc for some reason
+        if (compilerversion >= 9 && targetversion >= 7) return new String[] {"--release", String.valueOf(targetversion)}; // Doesn't accept 1.8 etc. for some reason
         throw new UnsupportedOperationException("Target Version: " + targetversion + " " + "Compiler Version: " + compilerversion);
     }
 }

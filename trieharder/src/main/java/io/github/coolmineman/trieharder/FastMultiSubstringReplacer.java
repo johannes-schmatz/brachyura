@@ -104,7 +104,7 @@ public final class FastMultiSubstringReplacer {
         int maxDepth = 0;
 
         void insert(String key, String value) {
-            TrieNode[] current = new TrieNode[] {root}; // Dumb lambda rules
+            TrieNode[] current = {root}; // Dumb lambda rules
             
             char[] chars = key.toCharArray();
             for (int i = 0; i < chars.length; i++) {

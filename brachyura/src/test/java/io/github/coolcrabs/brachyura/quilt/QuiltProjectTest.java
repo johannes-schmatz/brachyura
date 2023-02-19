@@ -27,7 +27,7 @@ public class QuiltProjectTest {
         @Override
         public int getJavaVersion() {
             return 17;
-        };
+        }
 
         @Override
         public MappingTree createMappings() {
@@ -53,7 +53,7 @@ public class QuiltProjectTest {
 
         public BrachyuraDecompiler decompiler() {
             return null;
-        };
+        }
     };
 
     @Test

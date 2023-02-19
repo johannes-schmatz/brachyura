@@ -42,12 +42,12 @@ public class NoMixinProjectTest {
 
         @Override
         public void getModDependencies(ModDependencyCollector d) {
-        };
+        }
 
         @Override
         public BrachyuraDecompiler decompiler() {
             return null;
-        };
+        }
     };
 
     @Test

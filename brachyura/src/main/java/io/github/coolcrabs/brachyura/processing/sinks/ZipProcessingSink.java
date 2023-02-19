@@ -18,6 +18,7 @@ import io.github.coolcrabs.brachyura.util.Util;
 
 public class ZipProcessingSink implements ProcessingSink, Closeable {
     // https://github.com/gradle/gradle/blob/master/subprojects/core/src/main/java/org/gradle/api/internal/file/archive/ZipCopyAction.java
+    @SuppressWarnings("UseOfObsoleteDateTimeApi")
     private static final long MAGIC_TIME = new GregorianCalendar(1980, Calendar.FEBRUARY, 1, 0, 0, 0).getTimeInMillis();
 
     public final ZipOutputStream out;

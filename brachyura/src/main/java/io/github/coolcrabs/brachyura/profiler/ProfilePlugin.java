@@ -68,7 +68,7 @@ public enum ProfilePlugin implements Plugin {
             // Object[] setRecordingOptions​Args = new Object[] {recordingId, tabularData};
             // mBeanServer.invoke(objectName, "setRecordingOptions", setRecordingOptions​Args, new String[]{long.class.getName(), TabularData.class.getName()});
 
-            Object[] startRecordingArgs = new Object[]{recordingId};
+            Object[] startRecordingArgs = {recordingId};
             mBeanServer.invoke(objectName, "startRecording", startRecordingArgs, new String[]{long.class.getName()});
             return recordingId;
         } catch (Exception e) {
@@ -78,10 +78,10 @@ public enum ProfilePlugin implements Plugin {
 
     void stopRecording(Long id) {
         try {
-            Object[] stopRecordingArgs = new Object[] {id};
+            Object[] stopRecordingArgs = {id};
             mBeanServer.invoke(objectName, "stopRecording", stopRecordingArgs, new String[]{long.class.getName()});
 
-            Object[] copyToArgs = new Object[] {id, null};
+            Object[] copyToArgs = {id, null};
             path.computeIfPresent(id, (k, v) -> {
                 copyToArgs[1] = v;
                 return null;
@@ -89,7 +89,7 @@ public enum ProfilePlugin implements Plugin {
             mBeanServer.invoke(objectName, "copyTo", copyToArgs, new String[]{long.class.getName(), String.class.getName()});
             Logger.info("Saved jfr recording: " + copyToArgs[1]);
 
-            Object[] closeRecordingArgs = new Object[] {id};
+            Object[] closeRecordingArgs = {id};
             mBeanServer.invoke(objectName, "closeRecording", closeRecordingArgs, new String[]{long.class.getName()});
         } catch (Exception e) {
             throw Util.sneak(e);

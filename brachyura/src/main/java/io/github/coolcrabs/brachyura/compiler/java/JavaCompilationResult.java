@@ -43,7 +43,7 @@ public class JavaCompilationResult extends ProcessingSource {
     /**
      * Gets the source file that produced an output
      * @param id
-     * @return The source file an output came from or null if it is not from a source file (from an annotation processor etc)
+     * @return The source file an output came from or null if it is not from a source file (from an annotation processor etc.)
      */
     public @Nullable Path getSourceFile(ProcessingId id) {
         FileObject fileObject = files.get(id).sibling;

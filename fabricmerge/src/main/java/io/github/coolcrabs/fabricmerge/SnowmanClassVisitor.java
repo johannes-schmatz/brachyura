@@ -21,6 +21,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
 class SnowmanClassVisitor extends ClassVisitor {
+	@SuppressWarnings("UnnecessaryUnicodeEscape")
 	private static final String SNOWMAN = "\u2603";
 	public static class SnowmanMethodVisitor extends MethodVisitor {
 		public SnowmanMethodVisitor(int api, MethodVisitor methodVisitor) {

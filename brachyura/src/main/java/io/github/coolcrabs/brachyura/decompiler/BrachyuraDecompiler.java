@@ -49,7 +49,7 @@ public abstract class BrachyuraDecompiler {
     protected abstract void decompileAndLinemap(Path jar, List<Path> classpath, Path resultDir, @Nullable MappingTree tree, int namespace);
     
     public static class DecompileResult {
-        // Original jar but is linemapped in some capacity if decompiler can do so
+        // Original jar but is linemapped in some capacity if decompiler can do so,
         // Otherwise it is just the input jar
         public final Path jar;
         // Decompiled sources

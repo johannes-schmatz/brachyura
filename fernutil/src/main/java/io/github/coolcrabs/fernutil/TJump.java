@@ -15,7 +15,6 @@ import io.github.coolcrabs.fernutil.FernUtil.LineNumbers;
 import net.fabricmc.fernflower.api.IFabricJavadocProvider;
 
 class TJump {
-    TJump() { }
 
     public static class PackageHack {
         PackageHack() { }

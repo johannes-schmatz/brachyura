@@ -222,7 +222,7 @@ class BuildscriptProject extends BaseJavaProject {
 
         @Override
         public String toString() {
-            return "BuildscriptClassloader@" + super.toString();
+            return "BuildscriptClassloader@" + Integer.toHexString(hashCode());
         }
     }
 }

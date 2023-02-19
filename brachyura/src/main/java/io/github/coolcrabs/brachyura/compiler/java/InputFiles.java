@@ -22,7 +22,7 @@ class InputFiles {
 
     Iterator<JavaFileObject> it(String packageName, Set<Kind> kinds, boolean recurse) {
         return new Iterator<JavaFileObject>() {
-            Iterator<Entry<String, InputFile>> c = files.tailMap(packageName).entrySet().iterator();
+            final Iterator<Entry<String, InputFile>> c = files.tailMap(packageName).entrySet().iterator();
             InputFile next = advance();
 
             private InputFile advance() {

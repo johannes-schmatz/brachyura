@@ -34,8 +34,8 @@ class BrachyuraMappingWriter implements IMappingWriter {
     @Override
     public void write(String output, ObfuscationType type, MappingSet<MappingField> fields, MappingSet<MappingMethod> methods) {
         class MethodsAndFields {
-            ArrayList<MappingSet.Pair<MappingField>> fields = new ArrayList<>();
-            ArrayList<MappingSet.Pair<MappingMethod>> methods = new ArrayList<>();
+            final ArrayList<MappingSet.Pair<MappingField>> fields = new ArrayList<>();
+            final ArrayList<MappingSet.Pair<MappingMethod>> methods = new ArrayList<>();
         }
         if (!fields.isEmpty()|| !methods.isEmpty()) {
             HashMap<String, MethodsAndFields> classMap = new HashMap<>();

@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 
 class TUtil {
-    TUtil() { }
 
     private static final Map<String, String> createArgs = Collections.singletonMap("create", "true");
     private static final FileSystemProvider jarFileSystemProvider;

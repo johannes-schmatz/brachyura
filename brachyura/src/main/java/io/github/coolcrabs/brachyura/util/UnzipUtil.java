@@ -28,8 +28,8 @@ public class UnzipUtil {
                     if (isDirectory) {
                         Files.createDirectories(newPath);
                     } else {
-                        // some zip stored file path only, need create parent directories
-                        // e.g data/folder/file.txt
+                        // Some zip stored file path only, need create parent directories
+                        // e.g. data/folder/file.txt
                         if (newPath.getParent() != null && Files.notExists(newPath.getParent())) {
                             Files.createDirectories(newPath.getParent());
                         }

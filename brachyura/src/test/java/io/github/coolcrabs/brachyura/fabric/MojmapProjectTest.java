@@ -27,7 +27,7 @@ class MojmapProjectTest {
 
         public int getJavaVersion() {
             return 17;
-        };
+        }
 
         @Override
         public MappingTree createMappings() {
@@ -54,14 +54,14 @@ class MojmapProjectTest {
             jij(d.addMaven(FabricMaven.URL, new MavenId(FabricMaven.GROUP_ID + ".fabric-api", "fabric-api-base", "0.4.7+f71b366f73"), ModDependencyFlag.RUNTIME, ModDependencyFlag.COMPILE));
             jij(d.addMaven(FabricMaven.URL, new MavenId(FabricMaven.GROUP_ID + ".fabric-api", "fabric-networking-api-v1", "1.0.24+f71b366f73"), ModDependencyFlag.RUNTIME, ModDependencyFlag.COMPILE));
             jij(d.addMaven(Maven.MAVEN_CENTRAL, new MavenId("org.ini4j:ini4j:0.5.4"), ModDependencyFlag.RUNTIME, ModDependencyFlag.COMPILE));
-        };
+        }
 
         @Override
         public BrachyuraDecompiler decompiler() {
             return null;
             // return new CfrDecompiler();
             // return new FernflowerDecompiler(Maven.getMavenJarDep("https://maven.quiltmc.org/repository/release", new MavenId("org.quiltmc:quiltflower:1.7.0"))); 
-        };
+        }
     };
 
     @Test
