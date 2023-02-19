@@ -1,8 +1,6 @@
 package io.github.coolcrabs.brachyura;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -10,6 +8,8 @@ import java.util.Locale;
 
 import io.github.coolcrabs.brachyura.util.MessageDigestUtil;
 import io.github.coolcrabs.brachyura.util.PathUtil;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestUtil {
     public static void assertSha256(Path file, String expected) {
@@ -21,5 +21,9 @@ public class TestUtil {
             }
             assertEquals(expected.toLowerCase(Locale.ENGLISH), MessageDigestUtil.toLowerCaseHexHash(md.digest()));
         });
+    }
+
+    public static void assertFileExists(Path file) {
+        assertDoesNotThrow(() -> assertTrue(Files.exists(file), "File " + file + " doesn't exist."));
     }
 }

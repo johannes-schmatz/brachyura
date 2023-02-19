@@ -85,7 +85,7 @@ public class Main {
 
         // setup EntryGlobals
         Class<?> entryGlobals = Class.forName("io.github.coolcrabs.brachyura.project.EntryGlobals", true, classLoader);
-        Method m = entryGlobals.getDeclaredMethod("set", Path.class, List.class); // Path, List<Path>
+        Method m = entryGlobals.getDeclaredMethod("set", Path.class, List.class); // @Nullable Path, @Nullable List<Path>
         m.setAccessible(true);
         m.invoke(null, projectPath, classpathPaths);
 

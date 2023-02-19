@@ -23,8 +23,7 @@ class BuildscriptDevEntry {
                 List<Path> buildscriptClasspath = Arrays.stream(args[1].split(File.pathSeparator)).map(Paths::get).collect(Collectors.toList());
 
                 // setup EntryGlobals
-                Class<?> entryGlobals = Class.forName("io.github.coolcrabs.brachyura.project.EntryGlobals");
-                Method m = entryGlobals.getDeclaredMethod("set", Path.class, List.class); // Path, List<Path>
+                Method m = EntryGlobals.class.getDeclaredMethod("set", Path.class, List.class); // @Nullable Path, @Nullable List<Path>
                 m.setAccessible(true);
                 m.invoke(null, projectDir, buildscriptClasspath);
 

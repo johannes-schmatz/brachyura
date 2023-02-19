@@ -10,16 +10,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
@@ -37,9 +34,18 @@ public class PathUtil {
         return brachyuraPath().resolve("cache");
     }
 
-    public static Path resolveAndCreateDir(Path parent, String child) {
+    public static Path resolve(Path parent, String... children) {
+        Path p = parent;
+        for (String child : children) {
+            p = p.resolve(child);
+        }
+        return p;
+    }
+
+    public static Path resolveAndCreateDir(Path parent, String... children) {
+        Path result = parent;
+        for (String child : children) result = result.resolve(child);
         try {
-            Path result = parent.resolve(child);
             Files.createDirectories(result);
             return result;
         } catch (IOException e) {
@@ -252,6 +258,31 @@ public class PathUtil {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public static void copyFromResources(String resource, Path output) throws Throwable {
+        URL resourceUrl = PathUtil.class.getResource(resource);
+        Objects.requireNonNull(resourceUrl, "Resource " + resource + " was not found!");
+        URI resrouceUri = resourceUrl.toURI();
+
+        try (FileSystem fs = FileSystems.newFileSystem(resrouceUri, Collections.emptyMap())) {
+            Path resourcePath = Paths.get(resrouceUri);
+
+            Path directory = output.getParent();
+            Files.createDirectories(directory);
+
+            Files.copy(resourcePath, output);
+        }
+    }
+
+    public static void copyTemplateFromResources(String template, Path projectDir) {
+        String resource = "/template" + (template.startsWith("/") ? template : ("/" + template));
+        Path output = projectDir.resolve(template);
+        try {
+            copyFromResources(resource, output);
+        } catch (Throwable t){
+            Util.sneak(t);
         }
     }
 }
