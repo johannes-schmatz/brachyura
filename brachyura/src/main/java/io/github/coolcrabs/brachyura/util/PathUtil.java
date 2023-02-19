@@ -178,6 +178,10 @@ public class PathUtil {
         }
     }
 
+    public static void deleteDirectoryIfExists(Path projectDir) {
+        if (Files.exists(projectDir)) deleteDirectory(projectDir);
+    }
+
     public static BufferedWriter newBufferedWriter(Path path) {
         try {
             Files.createDirectories(path.getParent());

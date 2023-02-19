@@ -22,6 +22,9 @@ public class InitProjectTest {
 	Project project;
 
 	@Test
+	void initProjectTest() {
+		assertDoesNotThrow(this::initProject);
+	}
 	void initProject() throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
 
 		// setup EntryGlobals
@@ -29,7 +32,7 @@ public class InitProjectTest {
 		m.setAccessible(true);
 		m.invoke(null, projectDir, null);
 
-		PathUtil.deleteDirectory(projectDir);
+		PathUtil.deleteDirectoryIfExists(projectDir);
 
 		Files.createDirectories(projectDir); // this is done by the user
 
