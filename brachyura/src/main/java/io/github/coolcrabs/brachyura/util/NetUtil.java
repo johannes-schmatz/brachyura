@@ -36,10 +36,18 @@ public class NetUtil {
         }
     }
 
+    // well' pretend we're gradle, some mavens dislike us otherwise
+    private static final String defaultUserAgent = "Gradle/7.6 (Linux;6.1.12-200.fc37.x86_64;amd64) (Red Hat, Inc.;17.0.6;17.0.6+10)";
+    private static String userAgent = System.getProperty("NetUtil.userAgent", defaultUserAgent);
+
+    public static void setUserAgent(String userAgent) {
+        NetUtil.userAgent = userAgent;
+    }
+
     public static InputStream inputStream(URL url) {
         try {
             URLConnection con = url.openConnection();
-            con.addRequestProperty("User-Agent", "brachyura");
+            con.addRequestProperty("User-Agent", userAgent);
             con.addRequestProperty("Accept-Encoding", "gzip");
             long size = con.getContentLengthLong();
             Logger.info("Downloading {} ({})", url, size == -1 ? "unknown size" : humanReadableByteCountSI(size));

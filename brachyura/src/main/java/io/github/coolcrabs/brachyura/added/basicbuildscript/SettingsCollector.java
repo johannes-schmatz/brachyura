@@ -16,46 +16,59 @@ public class SettingsCollector {
 	public SettingsCollector(Path projectDir) {
 		this.projectDir = projectDir;
 	}
-	// TODO: write java doc
+	//TODO: write java doc
+	//TODO: split this up in static classes like Dependencies and Minecraft, maybe even have instances from them? (for the module??)
+	// so code would look like `Dependencies d = new Dependencies(this_ide_module); d.add("https://maven.example.com/", "org.example.foo:foo:2.3");`
+	// maybe make it register itself in the module?
 
 	// build date format
-	protected DateTimeFormatter buildDateFormat = DateTimeFormatter.ofPattern(".yyyyMMdd.HHmmss");
+	public DateTimeFormatter buildDateFormat = DateTimeFormatter.ofPattern(".yyyyMMdd.HHmmss");
 	public void buildDateFormat(String format) {
 		buildDateFormat = DateTimeFormatter.ofPattern(format);
 	}
 
 	// minecraft
-	protected String minecraft = DefaultVersions.MINECRAFT;
+	public String minecraft = DefaultVersions.MINECRAFT;
 	public void minecraft(String version) {
 		minecraft = version;
 	}
 
 	// loader
-	protected MavenRef loader = DefaultVersions.FABRIC_LOADER;
+	public MavenRef loader = DefaultVersions.FABRIC_LOADER;
 	public void loader(String repo, String group, String artifact, String version) {
 		loader = new MavenRef(repo, group, artifact, version);
 	}
 
 	// yarn
-	protected MavenRef yarn = DefaultVersions.LEGACY_YARN;
+	public MavenRef yarn = DefaultVersions.LEGACY_YARN;
 	public void yarn(String repo, String group, String artifact, String version) {
 		yarn = new MavenRef(repo, group, artifact, version);
 	}
 
 	// intermediary
-	protected MavenRef intermediary = DefaultVersions.LEGACY_INTERMEDIARY;
+	public MavenRef intermediary = DefaultVersions.LEGACY_INTERMEDIARY;
 	public void intermediary(String repo, String group, String artifact, String version) {
 		intermediary = new MavenRef(repo, group, artifact, version);
 	}
 
 	// decompiler
-	protected MavenRef decompiler = DefaultVersions.QUILT_FLOWER;
+	public MavenRef decompiler = DefaultVersions.QUILT_FLOWER;
 	public void decompiler(String repo, String group, String artifact, String version) {
 		decompiler = new MavenRef(repo, group, artifact, version);
 	}
 
 	// dependencies
-	protected final List<MavenRef> dependencies = new ArrayList<>();
+
+	public final List<MavenRef> dependencies = new ArrayList<>();
+
+	/**
+	 * use this like {@code dependency("https://maven.example.com", "com.example.foo:foo:0.2.3")}
+	 */
+	public void dependency(String repo, String mavenId) {
+		String[] mavenIdSplit = mavenId.split(":");
+		if (mavenIdSplit.length != 3) throw new IllegalArgumentException("Cannot parse maven id '" + mavenId + "', doesn't split in 3 parts");
+		dependency(repo, mavenIdSplit[0], mavenIdSplit[1], mavenIdSplit[2]);
+	}
 	public void dependency(String repo, String group, String artifact, String version) {
 		dependency(new MavenRef(repo, group, artifact, version));
 	}
@@ -81,25 +94,25 @@ public class SettingsCollector {
 	}
 
 	// src
-	protected final List<Path> src = new ArrayList<>();
+	public final List<Path> src = new ArrayList<>();
 	public void src(String... path) {
 		src.add(resolve(path));
 	}
 
 	// resources
-	protected final List<Path> resources = new ArrayList<>();
+	public final List<Path> resources = new ArrayList<>();
 	public void resource(String... path) {
 		resources.add(resolve(path));
 	}
 
 	// template
-	protected final List<Path> templates = new ArrayList<>();
+	public final List<Path> templates = new ArrayList<>();
 	public void template(String... path) {
 		templates.add(resolve(path));
 	}
 
 	// templateMap
-	protected final Map<String, Lazy<String>> templateMap = new HashMap<>();
+	public final Map<String, Lazy<String>> templateMap = new HashMap<>();
 	public void templateMap(String key, Lazy<String> value) {
 		templateMap.put(key, value);
 	}
