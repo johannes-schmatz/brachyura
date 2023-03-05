@@ -35,6 +35,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import io.github.coolcrabs.brachyura.mappings.tinyremapper.*;
+import io.github.coolcrabs.brachyura.util.*;
 import org.jetbrains.annotations.Nullable;
 import org.tinylog.Logger;
 
@@ -177,9 +179,9 @@ public abstract class FabricContext {
     }
 
     public static class FmjJijApplier implements Processor {
-        final List<Path> jij;
+        final List<Pair<String, Supplier<InputStream>>> jij;
 
-        public FmjJijApplier(List<Path> jij) {
+        public FmjJijApplier(List<Pair<String, Supplier<InputStream>>> jij) {
             this.jij = jij;
         }
 
@@ -194,19 +196,19 @@ public abstract class FabricContext {
                     }
                     JsonArray jars = new JsonArray();
                     fabricModJson.add("jars", jars);
-                    List<String> used = new ArrayList<>();
-                    for (Path jar : jij) {
-                        String path = "META-INF/jars/" + jar.getFileName();
+                    Set<String> used = new HashSet<>();
+                    for (Pair<String, Supplier<InputStream>> jar : jij) {
+                        String path = "META-INF/jars/" + jar.getKey();
                         int a = 0;
                         while (used.contains(path)) {
-                            path = "META-INF/jars/" + a + jar.getFileName();
+                            path = "META-INF/jars/" + a + jar.getKey();
                             a++;
                         }
                         JsonObject o = new JsonObject();
                         o.addProperty("file", path);
                         jars.add(o);
                         used.add(path);
-                        sink.sink(() -> PathUtil.inputStream(jar), new ProcessingId(path, e.id.source));
+                        sink.sink(jar.getValue(), new ProcessingId(path, e.id.source));
                     }
                     sink.sink(() -> GsonUtil.toIs(fabricModJson, gson), e.id);
                 } else {
@@ -265,26 +267,33 @@ public abstract class FabricContext {
         }
     }
 
-    // TODO: this doesn't need to write files to disk
     public ProcessorChain resourcesProcessingChain(List<JavaJarDependency> jij) {
         Path fmjgen = getLocalBrachyuraPath().resolve("fmjgen");
         if (Files.exists(fmjgen)) PathUtil.deleteDirectory(fmjgen);
-        List<Path> jij2 = new ArrayList<>();
+        List<Pair<String, Supplier<InputStream>>> jij2 = new ArrayList<>();
         for (JavaJarDependency mod : jij) {
                 try {
                     try (ZipFile f = new ZipFile(mod.jar.toFile())) {
                         if (f.getEntry("fabric.mod.json") == null) {
-                            Path p = fmjgen.resolve(mod.jar.getFileName());
+                            ByteArrayOutputStreamEx out = new ByteArrayOutputStreamEx();
                             try (
-                                ZipProcessingSource s = new ZipProcessingSource(mod.jar);
-                                AtomicZipProcessingSink sink = new AtomicZipProcessingSink(p)
+                                ZipProcessingSource source = new ZipProcessingSource(mod.jar);
+                                ZipProcessingSink sink = new ZipProcessingSink(out)
                             ) {
-                                new ProcessorChain(new FmjGenerator(Collections.singletonMap(s, mod.mavenId))).apply(sink, s);
-                                sink.commit();
+                                ProcessorChain.Collector c = new ProcessorChain.Collector();
+                                source.getInputs(c);
+
+                                new FmjGenerator(Collections.singletonMap(source, mod.mavenId)).process(c.entries, sink);
                             }
-                            jij2.add(p);
+                            jij2.add(new Pair<>(
+                                    mod.jar.getFileName().toString(),
+                                    out::toIs
+                            ));
                         } else {
-                            jij2.add(mod.jar);
+                            jij2.add(new Pair<>(
+                                    mod.jar.getFileName().toString(),
+                                    () -> PathUtil.inputStream(mod.jar)
+                            ));
                         }
                     }
                 } catch (Exception e) {

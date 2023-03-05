@@ -3,6 +3,7 @@ package io.github.coolcrabs.brachyura.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.Supplier;
 
@@ -26,7 +27,7 @@ public final class Lazy<T> implements Supplier<T> {
     }
 
     private Lazy(Supplier<T> supplier, String creator) {
-        this.supplier = supplier;
+        this.supplier = Objects.requireNonNull(supplier);
         this.creator = creator;
     }
 

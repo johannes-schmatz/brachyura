@@ -2,16 +2,13 @@ package io.github.coolcrabs.brachyura.quilt;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Supplier;
 import java.util.zip.ZipFile;
 
 import com.google.gson.Gson;
@@ -38,32 +35,39 @@ import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 import io.github.coolcrabs.brachyura.processing.Processor;
 import io.github.coolcrabs.brachyura.processing.ProcessorChain;
 import io.github.coolcrabs.brachyura.processing.sinks.AtomicZipProcessingSink;
+import io.github.coolcrabs.brachyura.processing.sinks.ZipProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sources.ZipProcessingSource;
-import io.github.coolcrabs.brachyura.util.GsonUtil;
-import io.github.coolcrabs.brachyura.util.PathUtil;
-import io.github.coolcrabs.brachyura.util.Util;
+import io.github.coolcrabs.brachyura.util.*;
 
 public abstract class QuiltContext extends FabricContext {
     @Override
     public ProcessorChain resourcesProcessingChain(List<JavaJarDependency> jij) {
         Path fmjgen = getLocalBrachyuraPath().resolve("fmjgen");
         if (Files.exists(fmjgen)) PathUtil.deleteDirectory(fmjgen);
-        List<Path> jij2 = new ArrayList<>();
+        List<Pair<String, Supplier<InputStream>>> jij2 = new ArrayList<>();
         for (JavaJarDependency mod : jij) {
                 try {
                     try (ZipFile f = new ZipFile(mod.jar.toFile())) {
                         if (f.getEntry("fabric.mod.json") == null && f.getEntry("quilt.mod.json") == null) {
-                            Path p = fmjgen.resolve(mod.jar.getFileName());
+                            ByteArrayOutputStreamEx out = new ByteArrayOutputStreamEx();
                             try (
-                                ZipProcessingSource s = new ZipProcessingSource(mod.jar);
-                                AtomicZipProcessingSink sink = new AtomicZipProcessingSink(p)
+                                ZipProcessingSource source = new ZipProcessingSource(mod.jar);
+                                ZipProcessingSink sink = new ZipProcessingSink(out)
                             ) {
-                                new ProcessorChain(new FmjGenerator(Collections.singletonMap(s, mod.mavenId))).apply(sink, s);
-                                sink.commit();
+                                ProcessorChain.Collector c = new ProcessorChain.Collector();
+                                source.getInputs(c);
+
+                                new FmjGenerator(Collections.singletonMap(source, mod.mavenId)).process(c.entries, sink);
                             }
-                            jij2.add(p);
+                            jij2.add(new Pair<>(
+                                    mod.jar.getFileName().toString(),
+                                    out::toIs
+                            ));
                         } else {
-                            jij2.add(mod.jar);
+                            jij2.add(new Pair<>(
+                                    mod.jar.getFileName().toString(),
+                                    () -> PathUtil.inputStream(mod.jar)
+                            ));
                         }
                     }
                 } catch (Exception e) {
@@ -205,9 +209,9 @@ public abstract class QuiltContext extends FabricContext {
     }
 
     public static class QmjJijApplier implements Processor {
-        public final List<Path> jij;
+        public final List<Pair<String, Supplier<InputStream>>> jij;
 
-        public QmjJijApplier(List<Path> jij) {
+        public QmjJijApplier(List<Pair<String, Supplier<InputStream>>> jij) {
             this.jij = jij;
         }
 
@@ -222,17 +226,17 @@ public abstract class QuiltContext extends FabricContext {
                     }
                     JsonArray jars = new JsonArray();
                     quiltModJson.getAsJsonObject("quilt_loader").add("jars", jars);
-                    List<String> used = new ArrayList<>();
-                    for (Path jar : jij) {
-                        String path = "META-INF/jars/" + jar.getFileName();
+                    Set<String> used = new HashSet<>();
+                    for (Pair<String, Supplier<InputStream>> jar : jij) {
+                        String path = "META-INF/jars/" + jar.getKey();
                         int a = 0;
                         while (used.contains(path)) {
-                            path = "META-INF/jars/" + a + jar.getFileName();
+                            path = "META-INF/jars/" + a + jar.getKey();
                             a++;
                         }
                         jars.add(path);
                         used.add(path);
-                        sink.sink(() -> PathUtil.inputStream(jar), new ProcessingId(path, e.id.source));
+                        sink.sink(jar.getValue(), new ProcessingId(path, e.id.source));
                     }
                     sink.sink(() -> GsonUtil.toIs(quiltModJson, gson), e.id);
                 } else {
