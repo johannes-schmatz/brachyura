@@ -10,7 +10,7 @@ import io.github.coolcrabs.brachyura.processing.ProcessingId;
 import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 
-public class FilteringProcessingSource extends ProcessingSource {
+public class FilteringProcessingSource implements ProcessingSource {
     public final ProcessingSource parent;
     public final Predicate<ProcessingEntry> filter;
 

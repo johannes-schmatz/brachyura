@@ -14,25 +14,25 @@ import io.github.coolcrabs.brachyura.processing.ProcessingSource;
  * Collects inputs and makes this it's new source
  * You can then retrieve certain paths and/or use it as a source
  */
-public class ProcessingSponge extends ProcessingSource implements ProcessingSink {
-    public final HashMap<String, ProcessingEntry> a = new HashMap<>();
+public class ProcessingSponge implements ProcessingSink, ProcessingSource {
+    public final HashMap<String, ProcessingEntry> entries = new HashMap<>();
 
     @Override
     public void sink(Supplier<InputStream> in, ProcessingId id) {
-        a.put(id.path, new ProcessingEntry(in, id));
+        entries.put(id.path, new ProcessingEntry(in, id));
     }
 
     @Override
     public void getInputs(ProcessingSink sink) {
-        for (ProcessingEntry e : a.values()) {
+        for (ProcessingEntry e : entries.values()) {
             sink.sink(e.in, e.id);
         }
     }
 
     public ProcessingEntry popEntry(String path) {
-        ProcessingEntry r = a.get(path);
+        ProcessingEntry r = entries.get(path);
         if (r != null) {
-            a.remove(path);
+            entries.remove(path);
         }
         return r;
     }

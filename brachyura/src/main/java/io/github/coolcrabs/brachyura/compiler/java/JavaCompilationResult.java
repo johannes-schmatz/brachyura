@@ -17,7 +17,7 @@ import io.github.coolcrabs.brachyura.processing.ProcessingId;
 import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 
-public class JavaCompilationResult extends ProcessingSource {
+public class JavaCompilationResult implements ProcessingSource {
     public final BrachyuraJavaFileManager fileManager;
     public final HashMap<ProcessingId, OutputFile> files = new HashMap<>();
 

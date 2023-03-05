@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-public class ZipProcessingSource extends ProcessingSource implements Closeable {
+public class ZipProcessingSource implements Closeable, ProcessingSource {
     public final FileSystem fs;
     
     public ZipProcessingSource(Path file) {

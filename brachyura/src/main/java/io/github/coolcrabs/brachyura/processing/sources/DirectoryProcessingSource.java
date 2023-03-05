@@ -13,7 +13,7 @@ import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 import io.github.coolcrabs.brachyura.util.PathUtil;
 import io.github.coolcrabs.brachyura.util.Util;
 
-public class DirectoryProcessingSource extends ProcessingSource {
+public class DirectoryProcessingSource implements ProcessingSource {
     public final Path path;
 
     public DirectoryProcessingSource(Path path) {

@@ -3,21 +3,27 @@ package io.github.coolcrabs.brachyura.processing;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Supplier;
 
-import io.github.coolcrabs.brachyura.util.ArrayUtil;
 import io.github.coolcrabs.brachyura.util.Util;
 import java.util.Arrays;
 
 public class ProcessorChain {
-    public final Processor[] processors;
+    public final List<Processor> processors = new ArrayList<>();
 
     public ProcessorChain(Processor...processors) {
-        this.processors = processors;
+        this.processors.addAll(Arrays.asList(processors));
     }
 
     public ProcessorChain(ProcessorChain existing, Processor...processors) {
-        this.processors = ArrayUtil.join(Processor.class, existing.processors, processors);
+        this.processors.addAll(existing.processors);
+        this.processors.addAll(Arrays.asList(processors));
+    }
+
+    public ProcessorChain(Collection<Processor> processors) {
+        this.processors.addAll(processors);
     }
 
     public void apply(ProcessingSink out, ProcessingSource... in) {
@@ -30,12 +36,14 @@ public class ProcessorChain {
             for (ProcessingSource s : in) {
                 s.getInputs(c);
             }
+
             for (Processor p : processors) {
                 Collector c2 = new Collector();
-                p.process(c.e, c2);
-                c = c2; 
+                p.process(c.entries, c2);
+                c = c2;
             }
-            for (ProcessingEntry pe : c.e) {
+
+            for (ProcessingEntry pe : c.entries) {
                 out.sink(pe.in, pe.id);
             }
         } catch (IOException e) {
@@ -43,16 +51,12 @@ public class ProcessorChain {
         }
     }
 
-    public Processor[] getProcessors() {
-        return Arrays.copyOf(processors, processors.length);
-    }
-
     public static class Collector implements ProcessingSink {
-        ArrayList<ProcessingEntry> e = new ArrayList<>();
+        public final List<ProcessingEntry> entries = new ArrayList<>();
 
         @Override
         public void sink(Supplier<InputStream> in, ProcessingId id) {
-            e.add(new ProcessingEntry(in, id));
+            entries.add(new ProcessingEntry(in, id));
         }
     }
 }
