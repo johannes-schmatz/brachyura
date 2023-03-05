@@ -23,20 +23,63 @@ public class IdeModule {
     public final List<Path> testResourcePaths;
     public final int javaVersion;
 
-    IdeModule(String name, Path root, Supplier<List<JavaJarDependency>> dependencies, List<IdeModule> dependencyModules, List<RunConfigBuilder> runConfigs, List<Path> sourcePaths, List<Path> resourcePaths, List<Path> testSourcePaths, List<Path> testResourcePaths, int javaVersion) {
-        this.name = name;
-        this.root = root;
+    public IdeModule(String name, Path root, Supplier<List<JavaJarDependency>> dependencies, List<IdeModule> dependencyModules,
+            List<RunConfig> runConfigs, List<Path> sourcePaths, List<Path> resourcePaths, List<Path> testSourcePaths, List<Path> testResourcePaths,
+            int javaVersion) {
+        this.name = Objects.requireNonNull(name, "IdeModule missing name");
+        this.root = Objects.requireNonNull(root, "IdeModule missing root");
         this.dependencies = new Lazy<>(dependencies);
-        this.dependencyModules = dependencyModules;
-        this.runConfigs = new ArrayList<>(runConfigs.size());
-        for (RunConfigBuilder b : runConfigs) {
-            this.runConfigs.add(b.build(this));
-        }
-        this.sourcePaths = sourcePaths;
-        this.resourcePaths = resourcePaths;
-        this.testSourcePaths = testSourcePaths;
-        this.testResourcePaths = testResourcePaths;
+        this.dependencyModules = Objects.requireNonNull(dependencyModules);
+        this.runConfigs = Objects.requireNonNull(runConfigs);
+        this.sourcePaths = Objects.requireNonNull(sourcePaths);
+        this.resourcePaths = Objects.requireNonNull(resourcePaths);
+        this.testSourcePaths = Objects.requireNonNull(testSourcePaths);
+        this.testResourcePaths = Objects.requireNonNull(testResourcePaths);
         this.javaVersion = javaVersion;
+    }
+
+    @Override
+    public String toString() {
+        return "IdeModule{" +
+                "name='" + name + '\'' +
+                ", root=" + root +
+                ", dependencies=" + dependencies +
+                ", dependencyModules=" + dependencyModules +
+                ", runConfigs=" + runConfigs +
+                ", sourcePaths=" + sourcePaths +
+                ", resourcePaths=" + resourcePaths +
+                ", testSourcePaths=" + testSourcePaths +
+                ", testResourcePaths=" + testResourcePaths +
+                ", javaVersion=" + javaVersion +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IdeModule ideModule = (IdeModule) o;
+        return javaVersion == ideModule.javaVersion && name.equals(ideModule.name) && root.equals(ideModule.root) &&
+                dependencies.equals(ideModule.dependencies) &&
+                dependencyModules.equals(ideModule.dependencyModules) && runConfigs.equals(ideModule.runConfigs) && sourcePaths.equals(ideModule.sourcePaths) &&
+                resourcePaths.equals(ideModule.resourcePaths) && testSourcePaths.equals(ideModule.testSourcePaths) &&
+                testResourcePaths.equals(ideModule.testResourcePaths);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                name,
+                root,
+                dependencies,
+                dependencyModules,
+                runConfigs,
+                sourcePaths,
+                resourcePaths,
+                testSourcePaths,
+                testResourcePaths,
+                javaVersion
+        );
     }
 
     public static class IdeModuleBuilder {
@@ -155,13 +198,15 @@ public class IdeModule {
         }
 
         public IdeModule build() {
-            Objects.requireNonNull(name, "IdeModule missing name");
-            Objects.requireNonNull(root, "IdeModule missing root");
+            List<RunConfig> runConfigs = new ArrayList<>(this.runConfigs.size());
+            for (RunConfigBuilder b : this.runConfigs) {
+                runConfigs.add(b.build());
+            }
             return new IdeModule(name, root, dependencies, dependencyModules, runConfigs, sourcePaths, resourcePaths, testSourcePaths, testResourcePaths, javaVersion);
         }
     }
 
-    public class RunConfig {
+    public static class RunConfig {
         public final String name;
         public final String mainClass;
         public final Path cwd; // Make sure this exists
@@ -171,10 +216,11 @@ public class IdeModule {
         public final List<IdeModule> additionalModulesClasspath;
         public final List<Path> resourcePaths;
 
-        RunConfig(String name, String mainClass, Path cwd, Supplier<List<String>> vmArgs, Supplier<List<String>> args, Supplier<List<Path>> classpath, List<IdeModule> additionalModulesClasspath, List<Path> resourcePaths) {
-            this.name = name;
-            this.mainClass = mainClass;
-            this.cwd = cwd;
+        public RunConfig(String name, String mainClass, Path cwd, Supplier<List<String>> vmArgs, Supplier<List<String>> args, Supplier<List<Path>> classpath,
+                List<IdeModule> additionalModulesClasspath, List<Path> resourcePaths) {
+            this.name = Objects.requireNonNull(name, "Null name");
+            this.mainClass = Objects.requireNonNull(mainClass, "Null mainClass");
+            this.cwd = Objects.requireNonNull(cwd, "Null cwd");
             this.vmArgs = new Lazy<>(vmArgs);
             this.args = new Lazy<>(args);
             this.classpath = new Lazy<>(classpath);
@@ -273,11 +319,8 @@ public class IdeModule {
             return this;
         }
 
-        RunConfig build(IdeModule project) {
-            Objects.requireNonNull(name, "Null name");
-            Objects.requireNonNull(mainClass, "Null mainClass");
-            Objects.requireNonNull(cwd, "Null cwd");
-            return project.new RunConfig(name, mainClass, cwd, vmArgs, args, classpath, additionalModulesClasspath, resourcePaths);
+        public RunConfig build() {
+            return new RunConfig(name, mainClass, cwd, vmArgs, args, classpath, additionalModulesClasspath, resourcePaths);
         }
     }
 }
