@@ -18,6 +18,9 @@ trieharder/build/libs
 .idea
 *.iml
 
+# brachyura
+.brachyura/ideaout/**
+
 # Buildscript.java building
 Buildscript.class
 

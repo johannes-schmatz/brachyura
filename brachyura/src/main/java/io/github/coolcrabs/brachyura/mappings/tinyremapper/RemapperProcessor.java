@@ -3,9 +3,9 @@ package io.github.coolcrabs.brachyura.mappings.tinyremapper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import io.github.coolcrabs.brachyura.mappings.tinyremapper.TinyRemapperHelper.JarType;
 import io.github.coolcrabs.brachyura.processing.*;
@@ -27,28 +27,40 @@ public class RemapperProcessor implements Processor {
             TinyRemapperHelper.readJar(remapper, j, JarType.CLASSPATH);
         }
 
-        HashMap<ProcessingSource, InputTag> tags = new HashMap<>();
-        for (ProcessingEntry e : inputs.map.values()) {
-            tags.computeIfAbsent(e.id.source, k -> remapper.createInputTag());
-        }
+        Map<ProcessingSource, InputTag> tags = new HashMap<>();
 
-        for (ProcessingEntry entry : inputs.map.values()) {
+        for (ProcessingEntry entry : inputs) {
             if (entry.id.path.endsWith(".class")) {
-                remapper.readInputs(tags.get(entry.id.source), entry);
+                InputTag tag = tags.computeIfAbsent(entry.id.source, k -> remapper.createInputTag());
+                remapper.readInputs(tag, entry);
             } else {
                 sink.sink(entry.in, entry.id);
             }
         }
 
         for (Map.Entry<ProcessingSource, InputTag> entry : tags.entrySet()) {
-            remapper.apply((path, bytes) -> {
-                    sink.sink(
-                            () -> new ByteArrayInputStream(bytes), new ProcessingId(path + ".class", entry.getKey())
-                    );
-                },
-                entry.getValue());
+            remapper.apply(
+                    new SinkFileConsumer(sink, entry.getKey()),
+                    entry.getValue()
+            );
         }
     }
 
 
+    public static class SinkFileConsumer implements BiConsumer<String, byte[]> {
+        public final ProcessingSink sink;
+        public final ProcessingSource source;
+        public SinkFileConsumer(ProcessingSink sink, ProcessingSource source) {
+            this.sink = sink;
+            this.source = source;
+        }
+
+        @Override
+        public void accept(String path, byte[] bytes) {
+            sink.sink(
+                    () -> new ByteArrayInputStream(bytes),
+                    new ProcessingId(path + ".class", source)
+            );
+        }
+    }
 }

@@ -85,6 +85,7 @@ public class NetUtil {
             if (con instanceof HttpURLConnection) {
                ((HttpURLConnection)con).setRequestMethod("PUT"); 
             }
+            con.addRequestProperty("User-Agent", userAgent);
             con.setRequestProperty("Content-type", "application/octet-stream");
             // https://stackoverflow.com/a/3283496
             if (username != null && password != null) {
