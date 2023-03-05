@@ -14,7 +14,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -37,6 +36,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import io.github.coolcrabs.brachyura.mappings.tinyremapper.*;
+import io.github.coolcrabs.brachyura.processing.*;
 import io.github.coolcrabs.brachyura.util.*;
 import org.jetbrains.annotations.Nullable;
 import org.tinylog.Logger;
@@ -56,13 +56,6 @@ import io.github.coolcrabs.brachyura.maven.MavenId;
 import io.github.coolcrabs.brachyura.minecraft.Minecraft;
 import io.github.coolcrabs.brachyura.minecraft.VersionMeta;
 import io.github.coolcrabs.brachyura.mixin.BrachyuraMixinCompileExtensions;
-import io.github.coolcrabs.brachyura.processing.HashableProcessor;
-import io.github.coolcrabs.brachyura.processing.ProcessingEntry;
-import io.github.coolcrabs.brachyura.processing.ProcessingId;
-import io.github.coolcrabs.brachyura.processing.ProcessingSink;
-import io.github.coolcrabs.brachyura.processing.ProcessingSource;
-import io.github.coolcrabs.brachyura.processing.Processor;
-import io.github.coolcrabs.brachyura.processing.ProcessorChain;
 import io.github.coolcrabs.brachyura.processing.sinks.AtomicZipProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sinks.ZipProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sources.ProcessingSponge;
@@ -73,7 +66,6 @@ import io.github.coolmineman.trieharder.FindReplaceSourceRemapper;
 import net.fabricmc.mappingio.adapter.MappingSourceNsSwitch;
 import net.fabricmc.mappingio.tree.MappingTree;
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
-import net.fabricmc.tinyremapper.TinyRemapper;
 
 public abstract class FabricContext {
     public final Lazy<VersionMeta> versionMeta = new Lazy<>(this::createMcVersion);
@@ -150,7 +142,7 @@ public abstract class FabricContext {
         }
         try (TrWrapper trw = TrUtil.newRemapper().withMappings(new MappingTreeMappingProvider(compmappings, Namespaces.NAMED,
                 Namespaces.INTERMEDIARY)).build()) {
-            new ProcessorChain(
+            ProcessorChain.of(
                 new RemapperProcessor(
                     trw,
                     getCompileDependencies()
@@ -171,16 +163,15 @@ public abstract class FabricContext {
         }
 
         @Override
-        public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
-            for (ProcessingEntry e : inputs) {
-                if (!jij.isEmpty() && "fabric.mod.json".equals(e.id.path)) {
-                    Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
-                    JsonObject fabricModJson;
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(e.in.get(), StandardCharsets.UTF_8))) {
-                        fabricModJson = gson.fromJson(reader, JsonObject.class);
-                    }
+        public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
+            if (!jij.isEmpty()) {
+                Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
+                for (ProcessingEntry entry : inputs.removeByPath("fabric.mod.json")) {
+                    JsonObject fabricModJson = GsonUtil.fromJson(entry, gson);
+
                     JsonArray jars = new JsonArray();
                     fabricModJson.add("jars", jars);
+
                     Set<String> used = new HashSet<>();
                     for (Pair<String, Supplier<InputStream>> jar : jij) {
                         String path = "META-INF/jars/" + jar.getKey();
@@ -189,17 +180,18 @@ public abstract class FabricContext {
                             path = "META-INF/jars/" + a + jar.getKey();
                             a++;
                         }
+
                         JsonObject o = new JsonObject();
                         o.addProperty("file", path);
                         jars.add(o);
                         used.add(path);
-                        sink.sink(jar.getValue(), new ProcessingId(path, e.id.source));
+                        sink.sink(jar.getValue(), new ProcessingId(path, entry.id.source));
                     }
-                    sink.sink(() -> GsonUtil.toIs(fabricModJson, gson), e.id);
-                } else {
-                    sink.sink(e.in, e.id);
+
+                    sink.sink(() -> GsonUtil.toIs(fabricModJson, gson), entry.id);
                 }
             }
+            inputs.sinkRemaining(sink);
         }
     }
 
@@ -207,12 +199,8 @@ public abstract class FabricContext {
         INSTANCE;
 
         @Override
-        public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
-            HashMap<String, ProcessingEntry> entries = new HashMap<>();
-            for (ProcessingEntry e : inputs) {
-                entries.put(e.id.path, e);
-            }
-            ProcessingEntry fmj = entries.get("fabric.mod.json");
+        public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
+            ProcessingEntry fmj = inputs.getByPath("fabric.mod.json").iterator().next();
             if (fmj != null) {
                 Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
                 List<String> mixinjs = new ArrayList<>();
@@ -236,19 +224,18 @@ public abstract class FabricContext {
                     throw new UnknownJsonException(m.toString());
                 }
                 for (String mixin : mixinjs) {
-                    ProcessingEntry entry = entries.get(mixin);
-                    entries.remove(mixin);
-                    JsonObject mixinjson;
+                    ProcessingEntry entry = inputs.removeByPath(mixin).iterator().next();
+                    JsonObject mixinJson;
                     try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(entry.in.get(), StandardCharsets.UTF_8))) {
-                        mixinjson = gson.fromJson(bufferedReader, JsonObject.class);
+                        mixinJson = gson.fromJson(bufferedReader, JsonObject.class);
                     }
-                    if (mixinjson.get("refmap") == null) {
-                        mixinjson.addProperty("refmap", fabricModJson.get("id").getAsString() + "-refmap.json");
+                    if (mixinJson.get("refmap") == null) {
+                        mixinJson.addProperty("refmap", fabricModJson.get("id").getAsString() + "-refmap.json");
                     }
-                    sink.sink(() -> GsonUtil.toIs(mixinjson, gson), entry.id);
+                    sink.sink(() -> GsonUtil.toIs(mixinJson, gson), entry.id);
                 }
             }
-            entries.forEach((k, v) -> sink.sink(v.in, v.id));
+            inputs.sinkRemaining(sink);
         }
     }
 
@@ -265,10 +252,11 @@ public abstract class FabricContext {
                                 ZipProcessingSource source = new ZipProcessingSource(mod.jar);
                                 ZipProcessingSink sink = new ZipProcessingSink(out)
                             ) {
-                                ProcessorChain.Collector c = new ProcessorChain.Collector();
-                                source.getInputs(c);
-
-                                new FmjGenerator(Collections.singletonMap(source, mod.mavenId)).process(c.entries, sink);
+                                ProcessorChain.of(
+                                        new FmjGenerator(
+                                                Collections.singletonMap(source, mod.mavenId)
+                                        )
+                                ).apply(sink, source);
                             }
                             jij2.add(new Pair<>(
                                     mod.jar.getFileName().toString(),
@@ -285,7 +273,12 @@ public abstract class FabricContext {
                     throw Util.sneak(e);
                 }
         }
-        return new ProcessorChain(FMJRefmapApplier.INSTANCE, new FmjJijApplier(jij2), new AccessWidenerRemapper(mappings.get(), mappings.get().getNamespaceId(Namespaces.INTERMEDIARY), FabricAwCollector.INSTANCE));
+        return ProcessorChain.of(
+                FMJRefmapApplier.INSTANCE,
+                new FmjJijApplier(jij2),
+                new AccessWidenerRemapper(mappings.get(), mappings.get().getNamespaceId(Namespaces.INTERMEDIARY),
+                        FabricAwCollector.INSTANCE)
+        );
     }
 
     public static class ModDependencyCollector {
@@ -327,7 +320,7 @@ public abstract class FabricContext {
     }
 
     public ProcessorChain modRemapChainOverrideOnlyIfYouOverrideRemappedModsRootPathAndLogicVersion(TrWrapper trw, List<Path> cp, Map<ProcessingSource, MavenId> c) {
-        return new ProcessorChain(
+        return ProcessorChain.of(
             new RemapperProcessor(trw, cp),
             new MetaInfFixer(trw),
             JijRemover.INSTANCE,
@@ -459,8 +452,8 @@ public abstract class FabricContext {
         INSTANCE;
 
         @Override
-        public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
-            for (ProcessingEntry e : inputs) {
+        public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
+            for (ProcessingEntry e : inputs.map.values()) {
                 if ("fabric.mod.json".equals(e.id.path)) {
                     Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
                     JsonObject fabricModJson;
@@ -485,9 +478,9 @@ public abstract class FabricContext {
         }
 
         @Override
-        public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
+        public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
             HashSet<ProcessingSource> fmj = new HashSet<>();
-            for (ProcessingEntry e : inputs) {
+            for (ProcessingEntry e : inputs.map.values()) {
                 if ("fabric.mod.json".equals(e.id.path)) {
                     fmj.add(e.id.source);
                 }
@@ -671,7 +664,7 @@ public abstract class FabricContext {
                 ZipProcessingSource s = new ZipProcessingSource(remappedNamedJar.get().jar);
                 AtomicZipProcessingSink a = new AtomicZipProcessingSink(result);
             ) {
-                new ProcessorChain(hps).apply(a, s);
+                ProcessorChain.of(hps).apply(a, s);
                 a.commit();
             }
         }
@@ -716,7 +709,9 @@ public abstract class FabricContext {
             ZipProcessingSink sink = new ZipProcessingSink(outputJar);
             TrWrapper trw = remapperBuilder.build();
         ) {
-            new ProcessorChain(new RemapperProcessor(trw, classpath)).apply(sink, source);
+            ProcessorChain.of(
+                    new RemapperProcessor(trw, classpath)
+            ).apply(sink, source);
         }
     }
 

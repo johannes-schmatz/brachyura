@@ -1,29 +1,25 @@
 package io.github.coolcrabs.brachyura.processing;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Supplier;
+import java.util.*;
 
 import io.github.coolcrabs.brachyura.util.Util;
-import java.util.Arrays;
 
 public class ProcessorChain {
-    public final List<Processor> processors = new ArrayList<>();
-
-    public ProcessorChain(Processor...processors) {
-        this.processors.addAll(Arrays.asList(processors));
+    public static ProcessorChain of(Processor... processors) {
+        return new ProcessorChain(Arrays.asList(processors));
     }
 
-    public ProcessorChain(ProcessorChain existing, Processor...processors) {
-        this.processors.addAll(existing.processors);
-        this.processors.addAll(Arrays.asList(processors));
+    public static ProcessorChain ofExisting(ProcessorChain existing, Processor... processors) {
+        ProcessorChain processorChain = new ProcessorChain(existing.processors);
+        processorChain.processors.addAll(Arrays.asList(processors));
+        return processorChain;
     }
 
-    public ProcessorChain(Collection<Processor> processors) {
-        this.processors.addAll(processors);
+    public final List<Processor> processors;
+
+    public ProcessorChain(List<Processor> processors) {
+        this.processors = processors;
     }
 
     public void apply(ProcessingSink out, ProcessingSource... in) {
@@ -32,31 +28,22 @@ public class ProcessorChain {
 
     public void apply(ProcessingSink out, Iterable<? extends ProcessingSource> in) {
         try {
-            Collector c = new Collector();
+            ProcessingCollector c = new ProcessingCollector();
             for (ProcessingSource s : in) {
                 s.getInputs(c);
             }
 
-            for (Processor p : processors) {
-                Collector c2 = new Collector();
-                p.process(c.entries, c2);
+            for (Processor processor : processors) {
+                ProcessingCollector c2 = new ProcessingCollector();
+
+                processor.process(c, c2);
+
                 c = c2;
             }
 
-            for (ProcessingEntry pe : c.entries) {
-                out.sink(pe.in, pe.id);
-            }
+            c.sinkRemaining(out);
         } catch (IOException e) {
             Util.sneak(e);
-        }
-    }
-
-    public static class Collector implements ProcessingSink {
-        public final List<ProcessingEntry> entries = new ArrayList<>();
-
-        @Override
-        public void sink(Supplier<InputStream> in, ProcessingId id) {
-            entries.add(new ProcessingEntry(in, id));
         }
     }
 }

@@ -4,9 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.util.Collection;
 import java.util.HashMap;
 
+import io.github.coolcrabs.brachyura.processing.ProcessingCollector;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -26,32 +26,24 @@ public class AccessWidenerProcessor implements HashableProcessor {
     }
 
     @Override
-    public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
-        HashMap<String, ProcessingEntry> entries = new HashMap<>();
+    public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
         HashMap<String, ProcessingEntry> processedEntries = new HashMap<>();
-        for (ProcessingEntry e : inputs) {
-            if (entries.put(e.id.path, e) != null) {
-                throw new IllegalArgumentException("Duplicate entry " + e.id.path);
-            }
-        }
         for (String cls : aw.clsMap.keySet()) {
-            process(cls, entries, processedEntries, true);
+            process(cls, inputs, processedEntries, true);
             while (cls.contains("$")) {
                 cls = cls.substring(0, cls.lastIndexOf("$"));
-                process(cls, entries, processedEntries, false);
+                process(cls, inputs, processedEntries, false);
             }
         }
-        for (ProcessingEntry e : entries.values()) {
-            sink.sink(e.in, e.id);
-        }
+        inputs.sinkRemaining(sink);
         for (ProcessingEntry e : processedEntries.values()) {
             sink.sink(e.in, e.id);
         }
     }
 
-    void process(String cls, HashMap<String, ProcessingEntry> entries, HashMap<String, ProcessingEntry> processedEntries, boolean softhard) throws IOException {
+    void process(String cls, ProcessingCollector entries, HashMap<String, ProcessingEntry> processedEntries, boolean softhard) throws IOException {
         String file = cls + ".class";
-        ProcessingEntry e = entries.remove(file);
+        ProcessingEntry e = entries.removeByPath(file).iterator().next();
         if (e == null) {
             if (softhard && !processedEntries.containsKey(file)) Logger.warn("Unable to access class to widen {}", cls);
             return;

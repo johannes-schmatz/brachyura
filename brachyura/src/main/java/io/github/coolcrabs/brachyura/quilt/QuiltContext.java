@@ -28,13 +28,7 @@ import io.github.coolcrabs.brachyura.mappings.tinyremapper.MetaInfFixer;
 import io.github.coolcrabs.brachyura.mappings.tinyremapper.RemapperProcessor;
 import io.github.coolcrabs.brachyura.mappings.tinyremapper.TrWrapper;
 import io.github.coolcrabs.brachyura.maven.MavenId;
-import io.github.coolcrabs.brachyura.processing.ProcessingEntry;
-import io.github.coolcrabs.brachyura.processing.ProcessingId;
-import io.github.coolcrabs.brachyura.processing.ProcessingSink;
-import io.github.coolcrabs.brachyura.processing.ProcessingSource;
-import io.github.coolcrabs.brachyura.processing.Processor;
-import io.github.coolcrabs.brachyura.processing.ProcessorChain;
-import io.github.coolcrabs.brachyura.processing.sinks.AtomicZipProcessingSink;
+import io.github.coolcrabs.brachyura.processing.*;
 import io.github.coolcrabs.brachyura.processing.sinks.ZipProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sources.ZipProcessingSource;
 import io.github.coolcrabs.brachyura.util.*;
@@ -54,10 +48,11 @@ public abstract class QuiltContext extends FabricContext {
                                 ZipProcessingSource source = new ZipProcessingSource(mod.jar);
                                 ZipProcessingSink sink = new ZipProcessingSink(out)
                             ) {
-                                ProcessorChain.Collector c = new ProcessorChain.Collector();
-                                source.getInputs(c);
-
-                                new FmjGenerator(Collections.singletonMap(source, mod.mavenId)).process(c.entries, sink);
+                                ProcessorChain.of(
+                                        new FmjGenerator(
+                                                Collections.singletonMap(source, mod.mavenId)
+                                        )
+                                ).apply(sink, source);
                             }
                             jij2.add(new Pair<>(
                                     mod.jar.getFileName().toString(),
@@ -74,7 +69,12 @@ public abstract class QuiltContext extends FabricContext {
                     throw Util.sneak(e);
                 }
         }
-        return new ProcessorChain(QmjRefmapApplier.INSTANCE, new QmjJijApplier(jij2), new AccessWidenerRemapper(mappings.get(), mappings.get().getNamespaceId(Namespaces.INTERMEDIARY), QuiltAwCollector.INSTANCE));
+        return ProcessorChain.of(
+                QmjRefmapApplier.INSTANCE,
+                new QmjJijApplier(jij2),
+                new AccessWidenerRemapper(mappings.get(), mappings.get().getNamespaceId(Namespaces.INTERMEDIARY),
+                        QuiltAwCollector.INSTANCE)
+        );
     }
 
     @Override
@@ -89,7 +89,7 @@ public abstract class QuiltContext extends FabricContext {
 
     @Override
     public ProcessorChain modRemapChainOverrideOnlyIfYouOverrideRemappedModsRootPathAndLogicVersion(TrWrapper trw, List<Path> cp, Map<ProcessingSource, MavenId> c) {
-        return new ProcessorChain(
+        return ProcessorChain.of(
             new RemapperProcessor(trw, cp),
             new MetaInfFixer(trw),
             JijRemover.INSTANCE,
@@ -102,8 +102,8 @@ public abstract class QuiltContext extends FabricContext {
         INSTANCE;
 
         @Override
-        public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
-            for (ProcessingEntry e : inputs) {
+        public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
+            for (ProcessingEntry e : inputs.map.values()) {
                 boolean fmj = "fabric.mod.json".equals(e.id.path);
                 boolean qmj = "quilt.mod.json".equals(e.id.path);
                 if (fmj || qmj) {
@@ -130,23 +130,25 @@ public abstract class QuiltContext extends FabricContext {
         INSTANCE;
 
         @Override
-        public List<ProcessingId> collect(Collection<ProcessingEntry> inputs) throws IOException {
+        public List<ProcessingId> collect(ProcessingCollector inputs) throws IOException {
+            // TODO: is there a cleaner way for this?
+
             ArrayList<ProcessingId> result = new ArrayList<>();
             // Prefer a mod's qmj otherwise use fmj
             HashMap<ProcessingSource, ProcessingEntry> mjs = new HashMap<>();
-            for (ProcessingEntry e : inputs) {
-                if ("quilt.mod.json".equals(e.id.path) || ("fabric.mod.json".equals(e.id.path) && mjs.get(e.id.source) == null)) {
-                    mjs.put(e.id.source, e);
-                }
+            for (ProcessingEntry entry : inputs.getByPath("fabric.mod.json")) {
+                mjs.put(entry.id.source, entry);
             }
+
+            for (ProcessingEntry entry : inputs.getByPath("quilt.mod.json")) {
+                mjs.put(entry.id.source, entry);
+            }
+
             for (ProcessingEntry e : mjs.values()) {
                 boolean fmj = "fabric.mod.json".equals(e.id.path);
                 boolean qmj = "quilt.mod.json".equals(e.id.path);
                 if (fmj || qmj) {
-                    JsonObject modJson;
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(e.in.get(), StandardCharsets.UTF_8))) {
-                        modJson = new Gson().fromJson(reader, JsonObject.class);
-                    }
+                    JsonObject modJson = GsonUtil.fromJson(e, new Gson());
                     JsonElement aw0 = null;
                     if (fmj) aw0 = modJson.get("accessWidener");
                     if (qmj) aw0 = modJson.get("access_widener");
@@ -163,12 +165,8 @@ public abstract class QuiltContext extends FabricContext {
         INSTANCE;
 
         @Override
-        public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
-            HashMap<String, ProcessingEntry> entries = new HashMap<>();
-            for (ProcessingEntry e : inputs) {
-                entries.put(e.id.path, e);
-            }
-            ProcessingEntry qmj = entries.get("quilt.mod.json");
+        public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
+            ProcessingEntry qmj = inputs.getByPath("quilt.mod.json").iterator().next();
             if (qmj != null) {
                 Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
                 List<String> mixinjs = new ArrayList<>();
@@ -192,19 +190,18 @@ public abstract class QuiltContext extends FabricContext {
                     throw new UnknownJsonException(m.toString());
                 }
                 for (String mixin : mixinjs) {
-                    ProcessingEntry entry = entries.get(mixin);
-                    entries.remove(mixin);
-                    JsonObject mixinjson;
+                    ProcessingEntry entry = inputs.removeByPath(mixin).iterator().next();
+                    JsonObject mixinJson;
                     try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(entry.in.get(), StandardCharsets.UTF_8))) {
-                        mixinjson = gson.fromJson(bufferedReader, JsonObject.class);
+                        mixinJson = gson.fromJson(bufferedReader, JsonObject.class);
                     }
-                    if (mixinjson.get("refmap") == null) {
-                        mixinjson.addProperty("refmap", quiltModJson.getAsJsonObject("quilt_loader").get("id").getAsString() + "-refmap.json");
+                    if (mixinJson.get("refmap") == null) {
+                        mixinJson.addProperty("refmap", quiltModJson.getAsJsonObject("quilt_loader").get("id").getAsString() + "-refmap.json");
                     }
-                    sink.sink(() -> GsonUtil.toIs(mixinjson, gson), entry.id);
+                    sink.sink(() -> GsonUtil.toIs(mixinJson, gson), entry.id);
                 }
             }
-            entries.forEach((k, v) -> sink.sink(v.in, v.id));
+            inputs.sinkRemaining(sink);
         }
     }
 
@@ -216,10 +213,35 @@ public abstract class QuiltContext extends FabricContext {
         }
 
         @Override
-        public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
-            for (ProcessingEntry e : inputs) {
+        public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
+            if (!jij.isEmpty()) {
+                Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
+                for (ProcessingEntry entry : inputs.removeByPath("quilt.mod.json")) {
+                    JsonObject quiltModJson = GsonUtil.fromJson(entry, gson);
+
+                    JsonArray jars = new JsonArray();
+                    quiltModJson.getAsJsonObject("quilt_loader").add("jars", jars);
+
+                    Set<String> used = new HashSet<>();
+                    for (Pair<String, Supplier<InputStream>> jar : jij) {
+                        String path = "META-INF/jars/" + jar.getKey();
+                        int a = 0;
+                        while (used.contains(path)) {
+                            path = "META-INF/jars/" + a + jar.getKey();
+                            a++;
+                        }
+                        jars.add(path);
+                        used.add(path);
+                        sink.sink(jar.getValue(), new ProcessingId(path, entry.id.source));
+                    }
+                    sink.sink(() -> GsonUtil.toIs(quiltModJson, gson), entry.id);
+                }
+            }
+            inputs.sinkRemaining(sink);
+            /*
+            for (ProcessingEntry e : inputs.map.values()) {
                 if (!jij.isEmpty() && "quilt.mod.json".equals(e.id.path)) {
-                    Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
+
                     JsonObject quiltModJson;
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(e.in.get(), StandardCharsets.UTF_8))) {
                         quiltModJson = gson.fromJson(reader, JsonObject.class);
@@ -242,7 +264,7 @@ public abstract class QuiltContext extends FabricContext {
                 } else {
                     sink.sink(e.in, e.id);
                 }
-            }
+            }*/
         }
     }
 }

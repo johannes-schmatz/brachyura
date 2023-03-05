@@ -171,10 +171,20 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 						AtomicZipProcessingSink testJarSink = new AtomicZipProcessingSink(testoutjar);
 						AtomicZipProcessingSink testJarSourcesSink = new AtomicZipProcessingSink(testoutjarsources);
 				) {
-					new ProcessorChain().apply(jarSink, Arrays.stream(getResourceDirs()).map(DirectoryProcessingSource::new).collect(Collectors.toList()));
+					ProcessorChain.of().apply(
+							jarSink,
+							Arrays.stream(getResourceDirs())
+									.map(DirectoryProcessingSource::new)
+									.collect(Collectors.toList())
+					);
 
 					Path testRes = getModuleRoot().resolve("src").resolve("test").resolve("resources");
-					if (Files.exists(testRes)) new ProcessorChain().apply(testJarSink, new DirectoryProcessingSource(testRes));
+					if (Files.exists(testRes)) {
+						ProcessorChain.of().apply(
+								testJarSink,
+								new DirectoryProcessingSource(testRes)
+						);
+					}
 
 					JavaCompilationResult comp = compilationResult.get();
 					comp.getInputs((in, id) -> {
@@ -206,7 +216,12 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 						AtomicZipProcessingSink jarSink = new AtomicZipProcessingSink(outjar);
 						AtomicZipProcessingSink jarSourcesSink = new AtomicZipProcessingSink(outjarsources);
 				) {
-					new ProcessorChain().apply(jarSink, Arrays.stream(getResourceDirs()).map(DirectoryProcessingSource::new).collect(Collectors.toList()));
+					ProcessorChain.of().apply(
+							jarSink,
+							Arrays.stream(getResourceDirs())
+									.map(DirectoryProcessingSource::new)
+									.collect(Collectors.toList())
+					);
 					JavaCompilationResult comp = compilationResult.get();
 					comp.getInputs(jarSink::sink);
 					for (Path p : getSrcDirs()) {

@@ -4,7 +4,7 @@ import java.io.InputStream;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class ProcessingEntry {
+public final class ProcessingEntry {
     public final Supplier<InputStream> in;
     public final ProcessingId id;
 

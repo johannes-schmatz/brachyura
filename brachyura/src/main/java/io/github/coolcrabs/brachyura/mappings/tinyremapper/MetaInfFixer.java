@@ -6,16 +6,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
+import io.github.coolcrabs.brachyura.processing.ProcessingCollector;
 import io.github.coolcrabs.brachyura.processing.ProcessingEntry;
 import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.processing.Processor;
 import io.github.coolcrabs.brachyura.util.ByteArrayOutputStreamEx;
-import net.fabricmc.tinyremapper.TinyRemapper;
 
 // https://github.com/FabricMC/tiny-remapper/blob/master/src/main/java/net/fabricmc/tinyremapper/MetaInfFixer.java
 // Rewritten since tinyremapper's is heavily nio tied atm
@@ -27,8 +26,8 @@ public class MetaInfFixer implements Processor {
     }
 
     @Override
-    public void process(Collection<ProcessingEntry> inputs, ProcessingSink sink) throws IOException {
-        for (ProcessingEntry e : inputs) {
+    public void process(ProcessingCollector inputs, ProcessingSink sink) throws IOException {
+        for (ProcessingEntry e : inputs.map.values()) {
             if (e.id.path.startsWith("META-INF/")) {
                 int si = e.id.path.lastIndexOf('/');
                 String fn = si == -1 ? e.id.path : e.id.path.substring(si + 1);

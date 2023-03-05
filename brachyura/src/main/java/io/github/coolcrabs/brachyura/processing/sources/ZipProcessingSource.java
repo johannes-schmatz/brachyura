@@ -47,4 +47,11 @@ public class ZipProcessingSource implements Closeable, ProcessingSource {
             throw Util.sneak(e);
         }
     }
+
+    @Override
+    public String toString() {
+        return "ZipProcessingSource{" +
+                "fs=" + fs +
+                '}';
+    }
 }

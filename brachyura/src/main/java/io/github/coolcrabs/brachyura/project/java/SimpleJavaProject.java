@@ -37,7 +37,7 @@ public abstract class SimpleJavaProject extends BaseJavaProject {
     }
 
     public ProcessorChain getResourceProcessorChain() {
-        return new ProcessorChain();
+        return ProcessorChain.of();
     }
 
     public class SimpleJavaProjectModule extends SimpleJavaModule {
