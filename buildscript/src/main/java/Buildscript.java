@@ -455,6 +455,12 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		}
 	}
 
+	void test() {
+		build();
+
+		brachyura.test();
+	}
+
 	void publish() {
 		build();
 		try {
@@ -498,6 +504,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		super.getTasks(p);
 		p.accept(Task.of("build", this::build));
 		p.accept(Task.of("publish", this::publish));
+		p.accept(Task.of("test", this::test));
 	}
 
 }

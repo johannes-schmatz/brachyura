@@ -121,7 +121,6 @@ public class JavaCompilation {
     public JavaCompilationResult compile() throws CompilationFailedException {
         try {
             try (BrachyuraJavaFileManager fileManager = new BrachyuraJavaFileManager()) {
-                boolean success;
                 fileManager.setLocation(StandardLocation.CLASS_PATH, bruh(classpath));
                 fileManager.setLocation(StandardLocation.SOURCE_PATH, bruh(sourcePath));
                 for (ProcessingSource s : classpathSources) {
@@ -137,12 +136,13 @@ public class JavaCompilation {
                             null,
                             fileManager.getJavaFileObjectsFromFiles(bruh(sourceFiles))
                     );
-                    success = compilationTask.call();
+
+                    if (compilationTask.call()) {
+                        return new JavaCompilationResult(fileManager);
+                    } else {
+                        throw new CompilationFailedException(w.allWrittenLines);
+                    }
                 }
-                if (success) {
-                    return new JavaCompilationResult(fileManager);
-                }
-                throw new CompilationFailedException();
             }
         } catch (IOException e) {
             throw Util.sneak(e);

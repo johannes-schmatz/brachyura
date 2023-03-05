@@ -39,8 +39,12 @@ public class XmlUtil {
             --indent;
         }
 
-        public int getIndent() { // TODO: setIndent?
+        public int getIndent() {
             return indent;
+        }
+
+        public void setIndent(int indent) {
+            this.indent = indent;
         }
 
         public void newline() throws XMLStreamException {
