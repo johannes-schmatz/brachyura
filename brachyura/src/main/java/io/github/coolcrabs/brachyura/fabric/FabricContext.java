@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -50,12 +51,6 @@ import io.github.coolcrabs.brachyura.fabric.AccessWidenerRemapper.FabricAwCollec
 import io.github.coolcrabs.brachyura.mappings.MappingHasher;
 import io.github.coolcrabs.brachyura.mappings.MappingHelper;
 import io.github.coolcrabs.brachyura.mappings.Namespaces;
-import io.github.coolcrabs.brachyura.mappings.tinyremapper.Jsr2JetbrainsMappingProvider;
-import io.github.coolcrabs.brachyura.mappings.tinyremapper.MappingTreeMappingProvider;
-import io.github.coolcrabs.brachyura.mappings.tinyremapper.MetaInfFixer;
-import io.github.coolcrabs.brachyura.mappings.tinyremapper.RemapperProcessor;
-import io.github.coolcrabs.brachyura.mappings.tinyremapper.TinyRemapperHelper;
-import io.github.coolcrabs.brachyura.mappings.tinyremapper.TrWrapper;
 import io.github.coolcrabs.brachyura.maven.Maven;
 import io.github.coolcrabs.brachyura.maven.MavenId;
 import io.github.coolcrabs.brachyura.minecraft.Minecraft;
@@ -73,17 +68,6 @@ import io.github.coolcrabs.brachyura.processing.sinks.ZipProcessingSink;
 import io.github.coolcrabs.brachyura.processing.sources.ProcessingSponge;
 import io.github.coolcrabs.brachyura.processing.sources.ZipProcessingSource;
 import io.github.coolcrabs.brachyura.project.java.BuildModule;
-import io.github.coolcrabs.brachyura.util.AtomicDirectory;
-import io.github.coolcrabs.brachyura.util.AtomicFile;
-import io.github.coolcrabs.brachyura.util.CloseableArrayList;
-import io.github.coolcrabs.brachyura.util.GsonUtil;
-import io.github.coolcrabs.brachyura.util.JvmUtil;
-import io.github.coolcrabs.brachyura.util.Lazy;
-import io.github.coolcrabs.brachyura.util.MessageDigestUtil;
-import io.github.coolcrabs.brachyura.util.PathUtil;
-import io.github.coolcrabs.brachyura.util.StreamUtil;
-import io.github.coolcrabs.brachyura.util.UnzipUtil;
-import io.github.coolcrabs.brachyura.util.Util;
 import io.github.coolcrabs.fabricmerge.JarMerger;
 import io.github.coolmineman.trieharder.FindReplaceSourceRemapper;
 import net.fabricmc.mappingio.adapter.MappingSourceNsSwitch;
@@ -164,7 +148,8 @@ public abstract class FabricContext {
             });
             r.put(fm, s);
         }
-        try (TrWrapper trw = new TrWrapper(TinyRemapper.newRemapper().withMappings(new MappingTreeMappingProvider(compmappings, Namespaces.NAMED, Namespaces.INTERMEDIARY)))) {
+        try (TrWrapper trw = TrUtil.newRemapper().withMappings(new MappingTreeMappingProvider(compmappings, Namespaces.NAMED,
+                Namespaces.INTERMEDIARY)).build()) {
             new ProcessorChain(
                 new RemapperProcessor(
                     trw,
@@ -397,7 +382,7 @@ public abstract class FabricContext {
                     PathUtil.deleteDirectoryChildren(depdir);
                 }
                 try (AtomicDirectory a = new AtomicDirectory(resultdir)) {
-                    TinyRemapper.Builder tr = TinyRemapper.newRemapper()
+                    TrUtil.Builder tr = TrUtil.newRemapper()
                         .withMappings(new MappingTreeMappingProvider(mappings.get(), Namespaces.INTERMEDIARY, Namespaces.NAMED))
                         .renameInvalidLocals(false);
                     ArrayList<Path> cp = new ArrayList<>();
@@ -418,7 +403,7 @@ public abstract class FabricContext {
                             c.put(s, ri.source.jarDependency.mavenId);
                         }
                         Logger.info("Remapping {} mods", b.size());
-                        try (TrWrapper trw = new TrWrapper(tr)) {
+                        try (TrWrapper trw = tr.build()) {
                             modRemapChainOverrideOnlyIfYouOverrideRemappedModsRootPathAndLogicVersion(trw, cp, c).apply(
                                 (in, id) -> b.get(id.source).sink(in, id),
                                 b.keySet()
@@ -715,7 +700,7 @@ public abstract class FabricContext {
     }
 
     public void remapJar(MappingTree mappings, String src, String dst, Path inputJar, Path outputJar, List<Path> classpath) {
-        TinyRemapper.Builder remapperBuilder = TinyRemapper.newRemapper()
+        TrUtil.Builder remapperBuilder = TrUtil.newRemapper()
             .withMappings(new MappingTreeMappingProvider(mappings, src, dst))
             .withMappings(Jsr2JetbrainsMappingProvider.INSTANCE)
             .renameInvalidLocals(true)
@@ -729,7 +714,7 @@ public abstract class FabricContext {
         try (
             ZipProcessingSource source = new ZipProcessingSource(inputJar);
             ZipProcessingSink sink = new ZipProcessingSink(outputJar);
-            TrWrapper trw = new TrWrapper(remapperBuilder);
+            TrWrapper trw = remapperBuilder.build();
         ) {
             new ProcessorChain(new RemapperProcessor(trw, classpath)).apply(sink, source);
         }

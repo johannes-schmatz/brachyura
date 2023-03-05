@@ -20,10 +20,10 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 // https://github.com/FabricMC/tiny-remapper/blob/master/src/main/java/net/fabricmc/tinyremapper/MetaInfFixer.java
 // Rewritten since tinyremapper's is heavily nio tied atm
 public class MetaInfFixer implements Processor {
-    final TinyRemapper remapper;
+    final TrWrapper remapper;
 
     public MetaInfFixer(TrWrapper remapper) {
-        this.remapper = remapper.tr;
+        this.remapper = remapper;
     }
 
     @Override
@@ -61,19 +61,15 @@ public class MetaInfFixer implements Processor {
         }
     }
 
-    private static String mapFullyQualifiedClassName(String name, TinyRemapper tr) {
-        return tr.getEnvironment().getRemapper().map(name.replace('.', '/')).replace('/', '.');
-    }
-
-    private static void fixManifest(Manifest manifest, TinyRemapper remapper) {
+    private static void fixManifest(Manifest manifest, TrWrapper remapper) {
         Attributes mainAttrs = manifest.getMainAttributes();
         if (remapper != null) {
             String val = mainAttrs.getValue(Attributes.Name.MAIN_CLASS);
             if (val != null)
-                mainAttrs.put(Attributes.Name.MAIN_CLASS, mapFullyQualifiedClassName(val, remapper));
+                mainAttrs.put(Attributes.Name.MAIN_CLASS, remapper.mapFullyQualifiedClassName(val));
             String val1 = mainAttrs.getValue("Launcher-Agent-Class");
             if (val1 != null)
-                mainAttrs.putValue("Launcher-Agent-Class", mapFullyQualifiedClassName(val1, remapper));
+                mainAttrs.putValue("Launcher-Agent-Class", remapper.mapFullyQualifiedClassName(val1));
         }
         mainAttrs.remove(Attributes.Name.SIGNATURE_VERSION);
         for (Iterator<Attributes> it = manifest.getEntries().values().iterator(); it.hasNext();) {
@@ -89,7 +85,7 @@ public class MetaInfFixer implements Processor {
         }
     }
 
-    private static void fixServiceDecl(BufferedReader reader, Writer writer, TinyRemapper remapper) throws IOException {
+    private static void fixServiceDecl(BufferedReader reader, Writer writer, TrWrapper remapper) throws IOException {
         String line;
         while ((line = reader.readLine()) != null) {
             int end = line.indexOf('#');
@@ -107,7 +103,7 @@ public class MetaInfFixer implements Processor {
                 writer.write(line);
             } else {
                 writer.write(line, 0, start);
-                writer.write(mapFullyQualifiedClassName(line.substring(start, end), remapper));
+                writer.write(remapper.mapFullyQualifiedClassName(line.substring(start, end)));
                 writer.write(line, end, line.length() - end);
             }
             writer.write('\n');
