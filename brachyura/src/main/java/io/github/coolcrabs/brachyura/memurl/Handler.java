@@ -5,9 +5,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
-class Handler extends URLStreamHandler {
+public class Handler extends URLStreamHandler {
     @Override
-    protected URLConnection openConnection(URL u) throws IOException {
+    public URLConnection openConnection(URL u) throws IOException {
         return new MemoryUrlConnection(u);
     }
 }

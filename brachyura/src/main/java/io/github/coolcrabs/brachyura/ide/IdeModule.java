@@ -86,10 +86,11 @@ public class IdeModule {
         private String name;
         private Path root;
         private Supplier<List<JavaJarDependency>> dependencies = Collections::emptyList;
+        // TODO: more new ArrayList<>() here
         private List<IdeModule> dependencyModules = Collections.emptyList();
         private List<RunConfigBuilder> runConfigs = Collections.emptyList();
-        private List<Path> sourcePaths = Collections.emptyList();
-        private List<Path> resourcePaths = Collections.emptyList();
+        private final List<Path> sourcePaths = new ArrayList<>();
+        private final List<Path> resourcePaths = new ArrayList<>();
         private List<Path> testSourcePaths = Collections.emptyList();
         private List<Path> testResourcePaths = Collections.emptyList();
         private int javaVersion = 8;
@@ -140,28 +141,27 @@ public class IdeModule {
         }
 
         public IdeModuleBuilder sourcePaths(List<Path> sourcePaths) {
-            this.sourcePaths = sourcePaths;
+            this.sourcePaths.addAll(sourcePaths);
             return this;
         }
 
         public IdeModuleBuilder sourcePaths(Path... sourcePaths) {
-            this.sourcePaths = Arrays.asList(sourcePaths);
+            this.sourcePaths.addAll(Arrays.asList(sourcePaths));
             return this; 
         }
 
         public IdeModuleBuilder sourcePath(Path sourcePath) {
-            this.sourcePaths = new ArrayList<>();
-            sourcePaths.add(sourcePath);
+            this.sourcePaths.add(sourcePath);
             return this;
         }
 
         public IdeModuleBuilder resourcePaths(List<Path> resourcePaths) {
-            this.resourcePaths = resourcePaths;
+            this.resourcePaths.addAll(resourcePaths);
             return this;
         }
 
         public IdeModuleBuilder resourcePaths(Path... resourcePaths) {
-            this.resourcePaths = Arrays.asList(resourcePaths);
+            this.resourcePaths.addAll(Arrays.asList(resourcePaths));
             return this;
         }
 

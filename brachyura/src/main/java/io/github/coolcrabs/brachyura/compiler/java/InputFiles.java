@@ -1,29 +1,36 @@
 package io.github.coolcrabs.brachyura.compiler.java;
 
+import java.io.InputStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 
+import io.github.coolcrabs.brachyura.processing.ProcessingId;
+import io.github.coolcrabs.brachyura.processing.ProcessingSink;
 import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 
-class InputFiles {
-    TreeMap<String, InputFile> files = new TreeMap<>();
+public class InputFiles implements ProcessingSink {
+    public final TreeMap<String, InputFile> files = new TreeMap<>();
 
     public void add(ProcessingSource s) {
-        s.getInputs((in, id) -> {
-            files.put(id.path.replace('/', '.'), new InputFile(in, id));
-        });
+        s.getInputs(this);
+    }
+
+    @Override
+    public void sink(Supplier<InputStream> in, ProcessingId id) {
+        files.put(id.path.replace('/', '.'), new InputFile(in, id));
     }
 
     Iterator<JavaFileObject> it(String packageName, Set<Kind> kinds, boolean recurse) {
         return new Iterator<JavaFileObject>() {
-            final Iterator<Entry<String, InputFile>> c = files.tailMap(packageName).entrySet().iterator();
-            InputFile next = advance();
+            public final Iterator<Entry<String, InputFile>> c = files.tailMap(packageName).entrySet().iterator();
+            public InputFile next = advance();
 
             private InputFile advance() {
                 while (c.hasNext()) {

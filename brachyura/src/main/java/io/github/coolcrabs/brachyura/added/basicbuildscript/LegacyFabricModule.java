@@ -229,14 +229,14 @@ public class LegacyFabricModule extends FabricModule {
 			for (Map.Entry<String, Lazy<String>> i: project.settings.templateMap.entrySet()) {
 				String key = i.getKey();
 				Pattern templatePattern = Pattern.compile(
-						"(" +
+						"(" + // TODO: go remove, it's outdated!
 							"(" + // variants of simple data types
-								"Boolean\\.parseBoolean" + "|" +
-								"Byte\\.parseByte" + "|" +
-								"Short\\.parseShort" + "|" +
-								"Integer\\.parseInt" + "|" +
-								"Long\\.parseLong" +
-							")" +
+								"Boolean\\s*\\.\\s*parseBoolean" + "|" +
+								"Byte\\s*\\.\\s*parseByte" + "|" +
+								"Short\\s*\\.\\s*parseShort" + "|" +
+								"Integer\\s*\\.\\s*parseInt" + "|" +
+								"Long\\s*\\.\\s*parseLong" +
+							")\\s*" +
 							"(" +
 								"\\(\"\\$\\{" + key +"}\"\\)" + // ("${key}")
 							")" + "|" +
