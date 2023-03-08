@@ -39,7 +39,7 @@ public class JavaCompilation {
         return this;
     }
 
-    public JavaCompilation addSourceDir(Path... paths) {
+    public JavaCompilation addSourceDirs(Path... paths) {
         for (Path p : paths) addSourceDir(p);
         return this;
     }

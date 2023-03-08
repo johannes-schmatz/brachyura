@@ -139,7 +139,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		@Override
 		protected JavaCompilation createCompilation() {
 			JavaCompilation r = new JavaCompilation()
-					.addSourceDir(getSrcDirs())
+					.addSourceDirs(getSrcDirs())
 					.addClasspath(getCompileDependencies())
 					.addOption(JvmUtil.compileArgs(JvmUtil.CURRENT_JAVA_VERSION, getJavaVersion()));
 			if (hasTests()) {

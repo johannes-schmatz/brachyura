@@ -43,7 +43,7 @@ public abstract class SimpleJavaModule extends BuildModule {
 
     protected JavaCompilation createCompilation() {
         JavaCompilation r = new JavaCompilation()
-            .addSourceDir(getSrcDirs())
+            .addSourceDirs(getSrcDirs())
             .addClasspath(getCompileDependencies())
             .addOption(JvmUtil.compileArgs(JvmUtil.CURRENT_JAVA_VERSION, getJavaVersion()));
         for (BuildModule m : getModuleDependencies()) {

@@ -103,7 +103,7 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
     public @Nullable AccessWidener createAw() {
         String aw = fmjParseThingy.get()[2];
         if (aw == null) return null;
-        for (Path r : getResourceDirs()) {
+        for (Path r : ArrayUtil.join(Path.class, getResourceDirs(), getTemplateResourceDirs())) {
             Path awp = r.resolve(aw);
             if (Files.exists(awp)) {
                 AccessWidener result = new AccessWidener(Namespaces.NAMED);
@@ -150,13 +150,15 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
             Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
             JsonObject fabricModJson;
             Path fmj = null;
-            for (Path resDir : getResourceDirs()) {
+            for (Path resDir : ArrayUtil.join(Path.class, getResourceDirs(), getTemplateResourceDirs())) {
+                // TODO: might fail on version being dynamically inserted
                 Path p = resDir.resolve("fabric.mod.json");
                 if (Files.exists(p)) {
                     fmj = p;
                     break;
                 }
             }
+
             if (fmj == null) throw new IllegalStateException("Cannot find fabric.mod.json, check if it exists.");
 
             try (BufferedReader reader = PathUtil.newBufferedReader(fmj)) {
@@ -285,7 +287,26 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
         try {
             try (AtomicZipProcessingSink out = new AtomicZipProcessingSink(getBuildJarPath())) {
                 context.get().modDependencies.get(); // Ugly hack
-                resourcesProcessingChain().apply(out, Arrays.stream(getResourceDirs()).map(DirectoryProcessingSource::new).collect(Collectors.toList()));
+
+                ProcessingSponge templatesSponge = new ProcessingSponge();
+                templateResourcesProcessingChain().apply(
+                        templatesSponge,
+                        Arrays.stream(getTemplateResourceDirs())
+                                .filter(Files::exists)
+                                .map(DirectoryProcessingSource::new)
+                                .collect(Collectors.toList())
+                );
+
+                List<ProcessingSource> resourcesSources = Arrays.stream(getResourceDirs())
+                        .map(DirectoryProcessingSource::new)
+                        .collect(Collectors.toList());
+
+                resourcesSources.add(
+                        templatesSponge
+                );
+
+                resourcesProcessingChain().apply(out, resourcesSources);
+
                 context.get().getRemappedClasses(module.get()).values().forEach(s -> s.getInputs(out));
                 out.commit();
             }

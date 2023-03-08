@@ -1,0 +1,8 @@
+
+Template file, this should state "Hello World!":
+
+${hello_world}
+
+Between the following > and the < there should be a line break:
+
+>${newline}<

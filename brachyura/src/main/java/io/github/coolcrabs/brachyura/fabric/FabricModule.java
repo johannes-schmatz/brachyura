@@ -80,6 +80,14 @@ public abstract class FabricModule extends BuildModule {
     protected FabricCompilationResult createFabricCompilationResult() {
         try {
             String mixinOut = "mixinmapout.tiny";
+
+            ProcessingSponge templateSponge = new ProcessingSponge();
+
+            templateSourcesProcessorChain().apply(templateSponge,
+                    Arrays.stream(getTemplateSrcDirs())
+                            .filter(Files::exists)
+                            .map(DirectoryProcessingSource::new).collect(Collectors.toList()));
+
             JavaCompilation compilation0 = new JavaCompilation()
                 .addOption(JvmUtil.compileArgs(JvmUtil.CURRENT_JAVA_VERSION, getJavaVersion()))
                 .addOption(
@@ -91,10 +99,13 @@ public abstract class FabricModule extends BuildModule {
                     "-AdefaultObfuscationEnv=brachyura"
                 )
                 .addClasspath(context.getCompileDependencies())
-                .addSourceDir(getSrcDirs());
+                .addProcessingSourceSources(templateSponge)
+                .addSourceDirs(getSrcDirs());
+
             for (BuildModule m : getModuleDependencies()) {
                 compilation0.addClasspath(m.compilationOutput.get());
             }
+
             JavaCompilationResult compilation = compilation0.compile();
             ProcessingSponge compilationOutput = new ProcessingSponge();
             compilation.getInputs(compilationOutput);
@@ -130,7 +141,9 @@ public abstract class FabricModule extends BuildModule {
             .javaVersion(getJavaVersion())
             .dependencies(context.ideDependencies)
             .sourcePaths(getSrcDirs())
+            .sourcePaths(getTemplateSrcDirs())
             .resourcePaths(getResourceDirs())
+            .resourcePaths(getTemplateResourceDirs())
             .dependencyModules(getModuleDependencies().stream().map(BuildModule::createIdeModule).collect(Collectors.toList()))
             .runConfigs(
                 new IdeModule.RunConfigBuilder()
@@ -138,7 +151,7 @@ public abstract class FabricModule extends BuildModule {
                     .cwd(cwd)
                     .mainClass("net.fabricmc.loader.launch.knot.KnotClient")
                     .classpath(classpath)
-                    .resourcePaths(getResourceDirs())
+                    .resourcePaths(getResourceDirs()) // TODO: should getTemplateResources() be here?
                     .vmArgs(() -> this.ideVmArgs(true))
                     .args(() -> this.ideArgs(true)),
                 new IdeModule.RunConfigBuilder()

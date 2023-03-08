@@ -1,10 +1,6 @@
 package io.github.coolcrabs.brachyura.util;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public class StreamUtil {
@@ -46,4 +42,7 @@ public class StreamUtil {
         }
     }
 
+    public static InputStream writeFullyFromString(String input) {
+        return new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+    }
 }
