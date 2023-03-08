@@ -32,9 +32,10 @@ import io.github.coolcrabs.brachyura.util.Util;
 // https://github.com/OpenHFT/Java-Runtime-Compiler
 
 class BrachyuraJavaFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager {
-    InputFiles extraCp = new InputFiles();
-    MemoryUrlProvider extraCpUrl = new MemoryUrlProvider(p -> extraCp.files.get(p).in);
-    HashMap<URI, OutputFile> output = new HashMap<>();
+    public final InputFiles extraCp = new InputFiles();
+    public final InputFiles sources = new InputFiles();
+    public final MemoryUrlProvider extraCpUrl = new MemoryUrlProvider(p -> extraCp.files.get(p).in);
+    public final HashMap<URI, OutputFile> output = new HashMap<>();
 
     public BrachyuraJavaFileManager() {
         super(ToolProvider.getSystemJavaCompiler().getStandardFileManager(null, null, StandardCharsets.UTF_8));
@@ -125,9 +126,9 @@ class BrachyuraJavaFileManager extends ForwardingJavaFileManager<StandardJavaFil
     public String inferBinaryName(Location location, JavaFileObject file) {
         if (file instanceof InputFile) {
             InputFile f = (InputFile) file;
-            if (!f.path.endsWith(".class")) {
+            /*if (!f.path.endsWith(".class")) { // TODO: consider checking for .class and .java
                 return null;
-            }
+            }*/
             return f.path.substring(0, f.path.length() - 6).replace('/', '.');
         }
         return super.inferBinaryName(location, file);

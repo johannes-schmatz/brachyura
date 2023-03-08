@@ -1,32 +1,32 @@
 package io.github.coolcrabs.brachyura.compiler.java;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import javax.tools.JavaCompiler;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import javax.tools.JavaCompiler.CompilationTask;
 
+import io.github.coolcrabs.brachyura.util.IteratorUtil;
+import io.github.coolcrabs.brachyura.util.PathUtil;
 import org.tinylog.Logger;
 
 import io.github.coolcrabs.brachyura.processing.ProcessingSource;
 import io.github.coolcrabs.brachyura.util.Util;
 
 public class JavaCompilation {
-    public final ArrayList<String> options = new ArrayList<>();
-    public final ArrayList<Path> sourceFiles = new ArrayList<>();
-    public final ArrayList<Path> sourcePath = new ArrayList<>();
-    public final ArrayList<Path> classpath = new ArrayList<>();
-    public final ArrayList<ProcessingSource> classpathSources = new ArrayList<>();
+    public final List<String> options = new ArrayList<>();
+    public final List<Path> sourceFiles = new ArrayList<>();
+    public final List<Path> sourcePath = new ArrayList<>();
+    public final List<Path> classpath = new ArrayList<>();
+    public final List<ProcessingSource> classpathSources = new ArrayList<>();
+    public final List<ProcessingSource> sources = new ArrayList<>();
     private JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 
     public JavaCompilation addOption(String... options) {
@@ -105,26 +105,28 @@ public class JavaCompilation {
         return this;
     }
 
+    public JavaCompilation addProcessingSourceSources(ProcessingSource source) {
+        sources.add(source);
+        return this;
+    }
+
     public JavaCompilation setCompiler(JavaCompiler compiler) {
         this.compiler = compiler;
         return this;
     }
 
-    static ArrayList<File> bruh(ArrayList<Path> p) {
-        ArrayList<File> r = new ArrayList<>(p.size());
-        for (Path path : p) {
-            r.add(path.toFile());
-        }
-        return r;
-    }
-
     public JavaCompilationResult compile() throws CompilationFailedException {
         try {
             try (BrachyuraJavaFileManager fileManager = new BrachyuraJavaFileManager()) {
-                fileManager.setLocation(StandardLocation.CLASS_PATH, bruh(classpath));
-                fileManager.setLocation(StandardLocation.SOURCE_PATH, bruh(sourcePath));
+
+                fileManager.setLocation(StandardLocation.CLASS_PATH, PathUtil.pathsToFiles(classpath));
+                fileManager.setLocation(StandardLocation.SOURCE_PATH, PathUtil.pathsToFiles(sourcePath));
+
                 for (ProcessingSource s : classpathSources) {
                     fileManager.extraCp.add(s);
+                }
+                for (ProcessingSource source : sources) {
+                    fileManager.sources.add(source);
                 }
 
                 List<String> allWrittenLines = Collections.synchronizedList(new ArrayList<>());
@@ -137,7 +139,10 @@ public class JavaCompilation {
                             new BrachyuraDiagnosticListener(diagnostic -> allWrittenLines.add(diagnostic.toString())),
                             options,
                             null,
-                            fileManager.getJavaFileObjectsFromFiles(bruh(sourceFiles))
+                            IteratorUtil.concat(
+                                    fileManager.sources.files.values(),
+                                    fileManager.getJavaFileObjectsFromFiles(PathUtil.pathsToFiles(sourceFiles))
+                            )
                     );
 
                     if (compilationTask.call()) {

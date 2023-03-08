@@ -2,20 +2,15 @@ package io.github.coolcrabs.brachyura.util;
 
 import org.tinylog.Logger;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
@@ -288,5 +283,27 @@ public class PathUtil {
         } catch (Throwable t){
             Util.sneak(t);
         }
+    }
+
+    public static List<Path> filesToPaths(List<File> files) {
+        return filesToPaths(files, new ArrayList<>());
+    }
+
+    public static <T extends List<Path>> T filesToPaths(List<File> files, T list) {
+        for (File file : files) {
+            list.add(file.toPath());
+        }
+        return list;
+    }
+
+    public static List<File> pathsToFiles(List<Path> files) {
+        return pathsToFiles(files, new ArrayList<>());
+    }
+
+    public static <T extends List<File>> T pathsToFiles(List<Path> paths, T list) {
+        for (Path path : paths) {
+            list.add(path.toFile());
+        }
+        return list;
     }
 }
