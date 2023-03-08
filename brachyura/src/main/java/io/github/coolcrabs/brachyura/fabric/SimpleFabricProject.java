@@ -4,8 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -16,6 +15,9 @@ import com.google.gson.JsonObject;
 
 import io.github.coolcrabs.brachyura.decompiler.fernflower.FernflowerDecompiler;
 import io.github.coolcrabs.brachyura.maven.Maven;
+import io.github.coolcrabs.brachyura.processing.ProcessingSource;
+import io.github.coolcrabs.brachyura.processing.sources.ProcessingSponge;
+import io.github.coolcrabs.brachyura.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import io.github.coolcrabs.accesswidener.AccessWidener;
@@ -78,6 +80,22 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
 
     public Path[] getResourceDirs() {
         return new Path[]{getProjectDir().resolve("src").resolve("main").resolve("resources")};
+    }
+
+    public Path[] getTemplateSrcDirs() {
+        return new Path[]{getProjectDir().resolve("src").resolve("template").resolve("java")};
+    }
+
+    public Path[] getTemplateResourceDirs() {
+        return new Path[]{getProjectDir().resolve("src").resolve("template").resolve("resources")};
+    }
+
+    public Map<String, Lazy<String>> getTemplateMappingsForSources() {
+        return Collections.emptyMap();
+    }
+
+    public Map<String, Lazy<String>> getTemplateMappingsForResources() {
+        return Collections.emptyMap();
     }
 
     protected ArrayList<JavaJarDependency> jijList = new ArrayList<>();
@@ -186,6 +204,16 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
         public Path getContextRoot() {
             return getProjectDir();
         }
+
+        @Override
+        public Map<String, Lazy<String>> getTemplateMappingsForSources() {
+            return SimpleFabricProject.this.getTemplateMappingsForSources();
+        }
+
+        @Override
+        public Map<String, Lazy<String>> getTemplateMappingsForResources() {
+            return SimpleFabricProject.this.getTemplateMappingsForResources();
+        }
     }
 
     public class SimpleFabricModule extends FabricModule {
@@ -206,6 +234,16 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
         @Override
         public Path[] getResourceDirs() {
             return SimpleFabricProject.this.getResourceDirs();
+        }
+
+        @Override
+        public Path[] getTemplateSrcDirs() {
+            return SimpleFabricProject.this.getTemplateSrcDirs();
+        }
+
+        @Override
+        public Path[] getTemplateResourceDirs() {
+            return SimpleFabricProject.this.getTemplateResourceDirs();
         }
 
         @Override
@@ -237,6 +275,10 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
 
     public ProcessorChain resourcesProcessingChain() {
         return context.get().resourcesProcessingChain(jijList);
+    }
+
+    public ProcessorChain templateResourcesProcessingChain() {
+        return context.get().templateResourceProcessingChain();
     }
 
     public JavaJarDependency build() {

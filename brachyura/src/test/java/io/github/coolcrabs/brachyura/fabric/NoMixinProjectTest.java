@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
+import io.github.coolcrabs.brachyura.util.Lazy;
 import org.junit.jupiter.api.Test;
 
 import io.github.coolcrabs.brachyura.TestUtil;
@@ -48,6 +51,30 @@ public class NoMixinProjectTest {
         public BrachyuraDecompiler decompiler() {
             return null;
         }
+
+        @Override
+        public Map<String, Lazy<String>> getTemplateMappingsForSources() {
+            Map<String, Lazy<String>> r = new HashMap<>();
+
+            r.put("boolean", new Lazy<>(() -> "true"));
+            r.put("byte", new Lazy<>(() -> "0b00101010"));
+            r.put("short", new Lazy<>(() -> "420"));
+            r.put("int", new Lazy<>(() -> "69"));
+            r.put("long", new Lazy<>(() -> "69696969"));
+            r.put("string", new Lazy<>(() -> "Templates work."));
+
+            return r;
+        }
+
+        @Override
+        public Map<String, Lazy<String>> getTemplateMappingsForResources() {
+            Map<String, Lazy<String>> r = new HashMap<>();
+
+            r.put("newline", new Lazy<>(() -> "\n"));
+            r.put("hello_world", new Lazy<>(() -> "Hello World!"));
+
+            return r;
+        }
     };
 
     @Test
@@ -58,7 +85,7 @@ public class NoMixinProjectTest {
             long s2 = System.currentTimeMillis() - s;
             System.out.println(s2);
             // Seems to work accross java versions for now
-            TestUtil.assertSha256(b.jar, "8be3cb61a62c2ee9d3694a49eedb4131e25b0f830dc15661282dd27e708b9cc8");
+            TestUtil.assertSha256(b.jar, "7e2790149be4af7e38e6ea28f8c72de89cf2d02e08977de9c305951e6bc59f76");
         } catch (Exception e) {
             e.printStackTrace();
             throw e;

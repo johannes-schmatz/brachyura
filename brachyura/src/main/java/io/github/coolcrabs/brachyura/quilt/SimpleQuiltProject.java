@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -135,6 +136,16 @@ public abstract class SimpleQuiltProject extends SimpleFabricProject {
         public Path getContextRoot() {
             return getProjectDir();
         }
+
+        @Override
+        public Map<String, Lazy<String>> getTemplateMappingsForSources() {
+            return SimpleQuiltProject.this.getTemplateMappingsForSources();
+        }
+
+        @Override
+        public Map<String, Lazy<String>> getTemplateMappingsForResources() {
+            return SimpleQuiltProject.this.getTemplateMappingsForResources();
+        }
     }
 
     public class SimpleQuiltModule extends QuiltModule {
@@ -155,6 +166,16 @@ public abstract class SimpleQuiltProject extends SimpleFabricProject {
         @Override
         public Path[] getResourceDirs() {
             return SimpleQuiltProject.this.getResourceDirs();
+        }
+
+        @Override
+        public Path[] getTemplateSrcDirs() {
+            return SimpleQuiltProject.this.getTemplateSrcDirs();
+        }
+
+        @Override
+        public Path[] getTemplateResourceDirs() {
+            return SimpleQuiltProject.this.getTemplateResourceDirs();
         }
 
         @Override

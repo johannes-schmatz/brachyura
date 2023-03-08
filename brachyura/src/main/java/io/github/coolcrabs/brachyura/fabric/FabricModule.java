@@ -7,6 +7,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,6 +21,8 @@ import io.github.coolcrabs.brachyura.mappings.Namespaces;
 import io.github.coolcrabs.brachyura.minecraft.Minecraft;
 import io.github.coolcrabs.brachyura.processing.ProcessingEntry;
 import io.github.coolcrabs.brachyura.processing.ProcessingSource;
+import io.github.coolcrabs.brachyura.processing.ProcessorChain;
+import io.github.coolcrabs.brachyura.processing.sources.DirectoryProcessingSource;
 import io.github.coolcrabs.brachyura.processing.sources.ProcessingSponge;
 import io.github.coolcrabs.brachyura.project.java.BuildModule;
 import io.github.coolcrabs.brachyura.util.AtomicFile;
@@ -41,6 +44,8 @@ public abstract class FabricModule extends BuildModule {
 
     public abstract Path[] getSrcDirs();
     public abstract Path[] getResourceDirs();
+    public abstract Path[] getTemplateSrcDirs();
+    public abstract Path[] getTemplateResourceDirs();
 
     protected List<BuildModule> getModuleDependencies() {
         return Collections.emptyList();
@@ -65,6 +70,10 @@ public abstract class FabricModule extends BuildModule {
     @Override
     protected ProcessingSource createCompilationOutput() {
         return fabricCompilationResult.get().processingSource;
+    }
+
+    public ProcessorChain templateSourcesProcessorChain() {
+        return context.templateSourcesProcessingChain();
     }
 
     public final Lazy<FabricCompilationResult> fabricCompilationResult = new Lazy<>(this::createFabricCompilationResult);

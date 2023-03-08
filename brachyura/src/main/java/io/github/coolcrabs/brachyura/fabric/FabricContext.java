@@ -37,6 +37,7 @@ import com.google.gson.JsonObject;
 
 import io.github.coolcrabs.brachyura.mappings.tinyremapper.*;
 import io.github.coolcrabs.brachyura.processing.*;
+import io.github.coolcrabs.brachyura.processing.processor.TemplateApplier;
 import io.github.coolcrabs.brachyura.util.*;
 import org.jetbrains.annotations.Nullable;
 import org.tinylog.Logger;
@@ -279,6 +280,22 @@ public abstract class FabricContext {
                 new AccessWidenerRemapper(mappings.get(), mappings.get().getNamespaceId(Namespaces.INTERMEDIARY),
                         FabricAwCollector.INSTANCE)
         );
+    }
+
+    public ProcessorChain templateResourceProcessingChain() {
+        return ProcessorChain.of(new TemplateApplier(getTemplateMappingsForResources(), true));
+    }
+
+    public ProcessorChain templateSourcesProcessingChain() {
+        return ProcessorChain.of(new TemplateApplier(getTemplateMappingsForSources(), false));
+    }
+
+    public Map<String, Lazy<String>> getTemplateMappingsForSources() {
+        return Collections.emptyMap();
+    }
+
+    public Map<String, Lazy<String>> getTemplateMappingsForResources() {
+        return Collections.emptyMap();
     }
 
     public static class ModDependencyCollector {

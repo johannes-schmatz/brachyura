@@ -41,6 +41,16 @@ public class LegacyFabricModule extends FabricModule {
 		//return project.settings.resources.toArray(new Path[0]);
 	}
 
+	@Override
+	public Path[] getTemplateSrcDirs() {
+		return new Path[0]; // TODO
+	}
+
+	@Override
+	public Path[] getTemplateResourceDirs() {
+		return new Path[0]; // TODO
+	}
+
 	private int resourceCtr = 0;
 	private List<Path> getResourceDirs(String caller) {
 		List<Path> resourceDirs = project.settings.resources;
