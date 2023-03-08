@@ -6,23 +6,31 @@ import javax.tools.JavaFileObject;
 
 import org.tinylog.Logger;
 
-enum BrachyuraDiagnosticListener implements DiagnosticListener<JavaFileObject> {
-    INSTANCE;
+import java.util.function.Consumer;
+
+class BrachyuraDiagnosticListener implements DiagnosticListener<JavaFileObject> {
+    private final Consumer<Diagnostic<? extends JavaFileObject>> onDiagnostic;
+    public BrachyuraDiagnosticListener(Consumer<Diagnostic<? extends JavaFileObject>> onDiagnostic) {
+        this.onDiagnostic = onDiagnostic;
+    }
 
     @Override
-    public void report(Diagnostic diagnostic) {
+    public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+        onDiagnostic.accept(diagnostic);
+
+        String line = diagnostic.toString();
         switch (diagnostic.getKind()) {
             case ERROR:
-                Logger.error(diagnostic.toString());
+                Logger.error(line);
                 break;
             case WARNING:
             case MANDATORY_WARNING:
-                Logger.warn(diagnostic.toString());
+                Logger.warn(line);
                 break;
             case NOTE:
             case OTHER:
             default:
-                Logger.info(diagnostic.toString());
+                Logger.info(line);
                 break;
         }
     }

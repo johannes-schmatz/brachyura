@@ -18,4 +18,10 @@ public class CompilationFailedException extends Error {
 			System.out.println(line);
 		}
 	}
+
+	public String toString() {
+		String list = String.join("\n", compilationOutput);
+		String message = "\n" + list;
+		return getClass().getName() + ":" + message.replace("\n", "\n\twith: ");
+	}
 }

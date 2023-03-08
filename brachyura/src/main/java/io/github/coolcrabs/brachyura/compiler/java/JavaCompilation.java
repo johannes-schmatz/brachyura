@@ -126,12 +126,15 @@ public class JavaCompilation {
                 for (ProcessingSource s : classpathSources) {
                     fileManager.extraCp.add(s);
                 }
-                try (LoggerWriter w = new LoggerWriter()) {
+
+                List<String> allWrittenLines = Collections.synchronizedList(new ArrayList<>());
+                try (LoggerWriter w = new LoggerWriter(allWrittenLines::add)) {
                     options.add("-Xlint:unchecked");
+
                     CompilationTask compilationTask = compiler.getTask(
                             w,
                             fileManager,
-                            BrachyuraDiagnosticListener.INSTANCE,
+                            new BrachyuraDiagnosticListener(diagnostic -> allWrittenLines.add(diagnostic.toString())),
                             options,
                             null,
                             fileManager.getJavaFileObjectsFromFiles(bruh(sourceFiles))
@@ -140,7 +143,7 @@ public class JavaCompilation {
                     if (compilationTask.call()) {
                         return new JavaCompilationResult(fileManager);
                     } else {
-                        throw new CompilationFailedException(w.allWrittenLines);
+                        throw new CompilationFailedException(allWrittenLines);
                     }
                 }
             }

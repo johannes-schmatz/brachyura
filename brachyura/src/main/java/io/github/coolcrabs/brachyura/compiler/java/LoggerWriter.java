@@ -3,13 +3,18 @@ package io.github.coolcrabs.brachyura.compiler.java;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.jetbrains.annotations.NotNull;
 import org.tinylog.Logger;
 
 class LoggerWriter extends Writer {
     public final StringBuilder data = new StringBuilder();
-    public final List<String> allWrittenLines = new ArrayList<>();
+    private final Consumer<String> onLine;
+
+    public LoggerWriter(Consumer<String> onLine) {
+        this.onLine = onLine;
+    }
 
     @Override
     public void write(int c0) {
@@ -17,7 +22,7 @@ class LoggerWriter extends Writer {
             char c = (char) c0;
             if (c == '\n') {
                 String line = data.toString();
-                allWrittenLines.add(line);
+                onLine.accept(line);
                 Logger.info(line);
                 data.setLength(0);
             } else {
@@ -33,7 +38,7 @@ class LoggerWriter extends Writer {
                 char c = cbuf[i];
                 if (c == '\n') {
                     String line = data.toString();
-                    allWrittenLines.add(line);
+                    onLine.accept(line);
                     Logger.info(line);
                     data.setLength(0);
                 } else {
@@ -51,7 +56,9 @@ class LoggerWriter extends Writer {
     @Override
     public void close() {
         if (data.length() > 0) {
-            Logger.info(data.toString());
+            String line = data.toString();
+            onLine.accept(line);
+            Logger.info(line);
         }
     }
 }
