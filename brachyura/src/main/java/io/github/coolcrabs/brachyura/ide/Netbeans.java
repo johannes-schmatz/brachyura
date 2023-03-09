@@ -60,7 +60,11 @@ public enum Netbeans implements Ide {
         final IdeModule ideProject;
 
         NetbeansProject(Path dir, IdeModule ideProject) {
-            if (ideProject.sourcePaths.size() != 1) throw new UnsupportedOperationException("Netbeans support for >1 source path not impl");
+            // Netbeans, just go and die.
+            if (ideProject.sourcePaths.size() != 1) {
+                //throw new UnsupportedOperationException("Netbeans support for >1 source path not impl");
+                Logger.warn("Netbeans support for >1 source path not impl");
+            }
             projectProperties.setProperty("application.title", ideProject.name);
             projectProperties.setProperty("src.dir", ideProject.sourcePaths.iterator().next().toString());
             StringBuilder javacClasspath = new StringBuilder();
