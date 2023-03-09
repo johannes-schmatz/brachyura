@@ -4,20 +4,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Objects;
 import java.util.function.Supplier;
 
-class MemoryUrlConnection extends URLConnection {
-    Supplier<InputStream> in = null;
+public class MemoryUrlConnection extends URLConnection {
+    private Supplier<InputStream> in = null;
 
-    protected MemoryUrlConnection(URL url) {
+    public MemoryUrlConnection(URL url) {
         super(url);
     }
 
     @Override
     public void connect() throws IOException {
-        if (!connected) {
-            this.in = MemoryUrlProvider.instances.get(url.getHost()).func.apply(url.getPath().charAt(0) == '/' ? url.getPath().substring(1) : url.getPath());
-            this.connected = true;
+        if (in == null) {
+            in = Objects.requireNonNull(MemoryUrlProvider.getStreamSupplier(url));
         }
     }
 

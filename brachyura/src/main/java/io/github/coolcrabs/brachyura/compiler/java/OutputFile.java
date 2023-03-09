@@ -33,6 +33,7 @@ class OutputFile extends SimpleJavaFileObject {
     @Override
     public URI toUri() {
         // https://github.com/SpongePowered/Mixin/blob/1e1aa7fb52dec78630f3f2f53fd70a4c496a7d66/src/ap/java/org/spongepowered/tools/obfuscation/ReferenceManager.java#L158
+        // see https://discord.com/channels/844335788384452619/853484478306582538/1083139202541158412
         boolean workaround = false;
         for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
             if ("org.spongepowered.tools.obfuscation.ReferenceManager".equals(e.getClassName())) {
@@ -42,6 +43,7 @@ class OutputFile extends SimpleJavaFileObject {
                 return super.toUri();
             }
         }
+        // mixin decided it needs to convert the URI into a file to print it, so we need a valid URI that File() accepts, so this is needed
         if (workaround) {
             return PathUtil.CWD.resolve("MIXINBUGWORKAROUND").toFile().toURI();
         }

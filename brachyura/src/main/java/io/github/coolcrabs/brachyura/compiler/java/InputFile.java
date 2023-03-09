@@ -51,4 +51,14 @@ public class InputFile extends SimpleJavaFileObject {
     public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
         return StreamUtil.readFullyAsString(in.get());
     }
+
+    @Override
+    public String toString() {
+        return "InputFile{" +
+                "in=" + in +
+                ", path='" + path + '\'' +
+                ", uri=" + uri +
+                ", kind=" + kind +
+                '}';
+    }
 }

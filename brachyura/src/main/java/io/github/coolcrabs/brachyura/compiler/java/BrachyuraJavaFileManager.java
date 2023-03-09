@@ -47,14 +47,21 @@ class BrachyuraJavaFileManager extends ForwardingJavaFileManager<StandardJavaFil
         } else {
             return uri(location, relativeName);
         }
-        
     }
 
     private URI uri(Location location, String path) {
         try {
-            return new URI("crabmoment", location.getName().replaceAll("[^a-zA-Z0-9]", "."), path.startsWith("/") ? path : "/" + path, null);
+            return new URI("crabmoment", location.getName().replaceAll("[^a-zA-Z0-9]", "."), addStartingSlashIfMissing(path), null);
         } catch (Exception e) {
             throw Util.sneak(e);
+        }
+    }
+
+    public static String addStartingSlashIfMissing(String original) {
+        if (original.startsWith("/")) {
+            return original;
+        } else {
+            return "/" + original;
         }
     }
 
@@ -126,9 +133,10 @@ class BrachyuraJavaFileManager extends ForwardingJavaFileManager<StandardJavaFil
     public String inferBinaryName(Location location, JavaFileObject file) {
         if (file instanceof InputFile) {
             InputFile f = (InputFile) file;
-            /*if (!f.path.endsWith(".class")) { // TODO: consider checking for .class and .java
+            if (!(f.path.endsWith(".class") || f.path.endsWith(".java"))) {
+                //throw new IllegalArgumentException("Cannot infer the binary name of non .class or .java file: " + file);
                 return null;
-            }*/
+            }
             return f.path.substring(0, f.path.length() - 6).replace('/', '.');
         }
         return super.inferBinaryName(location, file);
