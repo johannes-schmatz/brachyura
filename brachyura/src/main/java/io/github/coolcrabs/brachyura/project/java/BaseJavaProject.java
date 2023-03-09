@@ -56,11 +56,11 @@ public abstract class BaseJavaProject extends Project {
         }
     }
     
-    public void runRunConfig(IdeModule ideProject, IdeModule.RunConfig rc) {
+    public void runRunConfig(IdeModule module, IdeModule.RunConfig rc) {
         try {
             LinkedHashSet<IdeModule> toCompile = new LinkedHashSet<>();
             Deque<IdeModule> a = new ArrayDeque<>();
-            a.add(ideProject);
+            a.add(module);
             a.addAll(rc.additionalModulesClasspath);
             while (!a.isEmpty()) {
                 IdeModule m = a.pop();
@@ -94,8 +94,8 @@ public abstract class BaseJavaProject extends Project {
             command.addAll(rc.vmArgs.get());
             command.add("-cp");
             ArrayList<Path> cp = new ArrayList<>(rc.classpath.get());
-            cp.addAll(ideProject.resourcePaths);
-            cp.add(mmap.get(ideProject));
+            cp.addAll(module.resourcePaths);
+            cp.add(mmap.get(module));
             for (IdeModule m : rc.additionalModulesClasspath) {
                 cp.add(mmap.get(m));
             }
