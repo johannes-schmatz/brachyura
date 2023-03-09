@@ -15,7 +15,40 @@ import java.util.List;
 
 //@SuppressWarnings("all") // Sue me
 public class Main {
-    static final Path BOOTSTRAP_DIR = Paths.get(System.getProperty("user.home")).resolve(".brachyura").resolve("bootstrap");
+    static final Path BOOTSTRAP_DIR;
+
+    static {
+        // Follow https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+        String xdgDataHome = System.getenv("XDG_DATA_HOME");
+        Path home;
+        boolean hide = false;
+        if (xdgDataHome == null || xdgDataHome.isEmpty()) {
+            // "If $XDG_DATA_HOME is either not set or empty, a default equal to $HOME/.local/share should be used."
+            Path userHome = Paths.get(System.getProperty("user.home"));
+            Path share = userHome.resolve(".local").resolve("share");
+            if (Files.exists(share)) {
+                home = share;
+            } else {
+                // Probably on windows or another OS that does not work with the XDG spec
+                Path windowsAppdataFolder = Paths.get(System.getenv("appdata"));
+                if (Files.exists(windowsAppdataFolder)) {
+                    // Make it in the appdata folder
+                    home = windowsAppdataFolder;
+                } else {
+                    // Just make it relative to the user home
+                    home = userHome;
+                    hide = true;
+                }
+            }
+        } else {
+            home = Paths.get(xdgDataHome);
+        }
+        if (hide) {
+            BOOTSTRAP_DIR = home.resolve(".brachyura").resolve("bootstrap");
+        } else {
+            BOOTSTRAP_DIR = home.resolve("brachyura").resolve("bootstrap");
+        }
+    }
 
     public static final String[] LIBS = {
             "https://repo.maven.apache.org/maven2/org/ow2/asm/asm/9.3/asm-9.3.jar",

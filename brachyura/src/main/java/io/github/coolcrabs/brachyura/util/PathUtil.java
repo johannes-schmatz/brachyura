@@ -20,9 +20,42 @@ public class PathUtil {
 
     public static final Path HOME = Paths.get(System.getProperty("user.home"));
     public static final Path CWD = Paths.get("").toAbsolutePath();
+    private static final Path brachyuraPath;
 
     public static Path brachyuraPath() {
-        return HOME.resolve(".brachyura");
+        return brachyuraPath;
+    }
+    static {
+        // Follow https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+        String xdgDataHome = System.getenv("XDG_DATA_HOME");
+        Path home;
+        boolean hide = false;
+        if (xdgDataHome == null || xdgDataHome.isEmpty()) {
+            // "If $XDG_DATA_HOME is either not set or empty, a default equal to $HOME/.local/share should be used."
+            Path userHome = Paths.get(System.getProperty("user.home"));
+            Path share = userHome.resolve(".local").resolve("share");
+            if (Files.exists(share)) {
+                home = share;
+            } else {
+                // Probably on windows or another OS that does not work with the XDG spec
+                Path windowsAppdataFolder = Paths.get(System.getenv("appdata"));
+                if (Files.exists(windowsAppdataFolder)) {
+                    // Make it in the appdata folder
+                    home = windowsAppdataFolder;
+                } else {
+                    // Just make it relative to the user home
+                    home = userHome;
+                    hide = true;
+                }
+            }
+        } else {
+            home = Paths.get(xdgDataHome);
+        }
+        if (hide) {
+            brachyuraPath = home.resolve("brachyura");
+        } else {
+            brachyuraPath = home.resolve(".brachyura");
+        }
     }
 
     public static Path cachePath() {
