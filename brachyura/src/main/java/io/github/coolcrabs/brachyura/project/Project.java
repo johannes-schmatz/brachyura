@@ -12,7 +12,7 @@ import io.github.coolcrabs.brachyura.util.PathUtil;
 public class Project {
     public BaseJavaProject buildscriptIdeProject;
 
-    public final Lazy<Tasks> tasks = new Lazy<>(this::getTasks);
+    public final Lazy<Tasks> tasks = Lazy.of(this::getTasks);
     // don't overwrite pls, just use getTasks(Consumer<Task>) to add your tasks
     private Tasks getTasks() {
         Tasks t = new Tasks();

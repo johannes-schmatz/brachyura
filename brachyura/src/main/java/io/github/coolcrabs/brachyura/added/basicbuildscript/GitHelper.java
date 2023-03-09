@@ -9,7 +9,7 @@ public class GitHelper {
 	/**
 	 * is the current directory clean or not?
 	 */
-	public static final Lazy<String> STATUS = new Lazy<>(GitHelper::getStatus);
+	public static final Lazy<String> STATUS = Lazy.of(GitHelper::getStatus);
 	private static boolean getStatusBoolean() {
 		try {
 			int exitCode = new ProcessBuilder( // not added
@@ -34,7 +34,7 @@ public class GitHelper {
 	/**
 	 * the current commit hash
 	 */
-	public static final Lazy<String> COMMIT = new Lazy<>(GitHelper::getCommit);
+	public static final Lazy<String> COMMIT = Lazy.of(GitHelper::getCommit);
 	private static String getCommit() {
 		Process p;
 		try {
@@ -58,7 +58,7 @@ public class GitHelper {
 	/**
 	 * the current branch
 	 */
-	public static final Lazy<String> BRANCH = new Lazy<>(GitHelper::getBranch);
+	public static final Lazy<String> BRANCH = Lazy.of(GitHelper::getBranch);
 	private static String getBranch() {
 		Process p;
 		try {

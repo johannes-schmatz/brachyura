@@ -35,11 +35,11 @@ import java.util.stream.Collectors;
 
 public abstract class LegacyFabricProject extends BaseJavaProject {
 	public final SettingsCollector settings = new SettingsCollector(getProjectDir());
-	public final Lazy<FabricContext> context = new Lazy<>(this::createContext);
-	public final Lazy<FabricModule> module = new Lazy<>(this::createModule);
+ 	public final Lazy<FabricContext> context = Lazy.of(this::createContext);
+	public final Lazy<FabricModule> module = Lazy.of(this::createModule);
 	protected ArrayList<JavaJarDependency> jijList = new ArrayList<>();
 	private BuildDate buildDate = null; // to save the build date for the version
-	private final Lazy<String[]> fmjParseThingy = new Lazy<>(() -> {
+	private final Lazy<String[]> fmjParseThingy = Lazy.of(() -> {
 		try {
 			Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
 			JsonObject fabricModJson;
@@ -178,7 +178,7 @@ public abstract class LegacyFabricProject extends BaseJavaProject {
 	}
 
 	public Lazy<String> getBuildDate(String format) {
-		return new Lazy<>(() -> {
+		return Lazy.of(() -> {
 			if (buildDate != null)
 				return buildDate.format(format);
 			throw new NullPointerException("build date not set");

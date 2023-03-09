@@ -31,7 +31,7 @@ public abstract class SimpleJavaProject extends BaseJavaProject {
         return Collections.emptyList();
     }
 
-    public final Lazy<SimpleJavaModule> projectModule = new Lazy<>(this::createProjectModule);
+    public final Lazy<SimpleJavaModule> projectModule = Lazy.of(this::createProjectModule);
     public SimpleJavaModule createProjectModule() {
         return new SimpleJavaProjectModule();
     }

@@ -75,7 +75,7 @@ public abstract class SimpleQuiltProject extends SimpleFabricProject {
         throw new UnknownJsonException("Unable to find aw named:" + aw);
     }
 
-    private final Lazy<String[]> qmjParseThingy = new Lazy<>(() -> {
+    private final Lazy<String[]> qmjParseThingy = Lazy.of(() -> {
         try {
             Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
             JsonObject quiltModJson;

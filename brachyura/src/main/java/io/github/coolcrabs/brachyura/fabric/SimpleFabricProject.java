@@ -42,12 +42,12 @@ import io.github.coolcrabs.brachyura.util.Util;
 import net.fabricmc.mappingio.tree.MappingTree;
 
 public abstract class SimpleFabricProject extends BaseJavaProject {
-    public final Lazy<FabricContext> context = new Lazy<>(this::createContext);
+    public final Lazy<FabricContext> context = Lazy.of(this::createContext);
     protected FabricContext createContext() {
         return new SimpleFabricContext();
     }
 
-    public final Lazy<FabricModule> module = new Lazy<>(this::createModule);
+    public final Lazy<FabricModule> module = Lazy.of(this::createModule);
     protected FabricModule createModule() {
         return new SimpleFabricModule(context.get());
     }
@@ -145,7 +145,7 @@ public abstract class SimpleFabricProject extends BaseJavaProject {
         return context.get().createMojmap();
     }
 
-    private final Lazy<String[]> fmjParseThingy = new Lazy<>(() -> {
+    private final Lazy<String[]> fmjParseThingy = Lazy.of(() -> {
         try {
             Gson gson = new GsonBuilder().setPrettyPrinting().setLenient().create();
             JsonObject fabricModJson;

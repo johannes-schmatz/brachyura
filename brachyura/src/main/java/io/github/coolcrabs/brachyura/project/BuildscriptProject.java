@@ -96,7 +96,7 @@ class BuildscriptProject extends BaseJavaProject {
         return new IdeModule[] {b.build()};
     }
 
-    public final Lazy<Project> project = new Lazy<>(this::createProject);
+    public final Lazy<Project> project = Lazy.of(this::createProject);
     @Nullable
     public Project createProject() {
         try {

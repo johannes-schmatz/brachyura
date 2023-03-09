@@ -18,7 +18,7 @@ public abstract class SimpleJavaModule extends BuildModule {
     public abstract Path[] getSrcDirs();
     public abstract Path[] getResourceDirs();
 
-    public final Lazy<List<JavaJarDependency>> dependencies = new Lazy<>(this::createDependencies);
+    public final Lazy<List<JavaJarDependency>> dependencies = Lazy.of(this::createDependencies);
     protected abstract List<JavaJarDependency> createDependencies();
 
     protected List<BuildModule> getModuleDependencies() {
@@ -39,7 +39,7 @@ public abstract class SimpleJavaModule extends BuildModule {
         return compilationResult.get();
     }
 
-    public final Lazy<JavaCompilationResult> compilationResult = new Lazy<>(() -> createCompilation().compile());
+    public final Lazy<JavaCompilationResult> compilationResult = Lazy.of(() -> createCompilation().compile());
 
     protected JavaCompilation createCompilation() {
         JavaCompilation r = new JavaCompilation()

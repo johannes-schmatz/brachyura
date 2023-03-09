@@ -69,15 +69,15 @@ import net.fabricmc.mappingio.tree.MappingTree;
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
 
 public abstract class FabricContext {
-    public final Lazy<VersionMeta> versionMeta = new Lazy<>(this::createMcVersion);
+    public final Lazy<VersionMeta> versionMeta = Lazy.of(this::createMcVersion);
     public abstract VersionMeta createMcVersion();
 
-    public final Lazy<MappingTree> mappings = new Lazy<>(this::createMappings);
+    public final Lazy<MappingTree> mappings = Lazy.of(this::createMappings);
     public abstract MappingTree createMappings();
 
     public abstract FabricLoader getLoader();
 
-    public final Lazy<List<ModDependency>> modDependencies = new Lazy<>(() -> {
+    public final Lazy<List<ModDependency>> modDependencies = Lazy.of(() -> {
         ModDependencyCollector d = new ModDependencyCollector();
         getModDependencies(d);
         return d.dependencies;
@@ -86,7 +86,7 @@ public abstract class FabricContext {
 
     public abstract Path getContextRoot();
 
-    public final Lazy<Optional<AccessWidener>> aw = new Lazy<>(() -> Optional.ofNullable(createAw()));
+    public final Lazy<Optional<AccessWidener>> aw = Lazy.of(() -> Optional.ofNullable(createAw()));
     protected @Nullable AccessWidener createAw() {
         return null;
     }
@@ -346,7 +346,7 @@ public abstract class FabricContext {
         );
     }
 
-    public final Lazy<List<ModDependency>> remappedModDependencies = new Lazy<>(this::createRemappedModDependencies);
+    public final Lazy<List<ModDependency>> remappedModDependencies = Lazy.of(this::createRemappedModDependencies);
     protected List<ModDependency> createRemappedModDependencies() {
         class RemapInfo {
             ModDependency source;
@@ -527,7 +527,7 @@ public abstract class FabricContext {
         }
     }
 
-    public final Lazy<List<Dependency>> mcDependencies = new Lazy<>(this::createMcDependencies);
+    public final Lazy<List<Dependency>> mcDependencies = Lazy.of(this::createMcDependencies);
     protected List<Dependency> createMcDependencies() {
         ArrayList<Dependency> result = new ArrayList<>(Minecraft.getDependencies(versionMeta.get()));
         result.add(Maven.getMavenJarDep(Maven.MAVEN_CENTRAL, new MavenId("org.jetbrains", "annotations", "19.0.0")));
@@ -549,7 +549,7 @@ public abstract class FabricContext {
         return result;
     }
 
-    public final Lazy<List<JavaJarDependency>> ideDependencies = new Lazy<>(this::createIdeDependencies);
+    public final Lazy<List<JavaJarDependency>> ideDependencies = Lazy.of(this::createIdeDependencies);
     protected List<JavaJarDependency> createIdeDependencies() {
         List<JavaJarDependency> result = new ArrayList<>();
         for (Dependency dependency : dependencies.get()) {
@@ -564,7 +564,7 @@ public abstract class FabricContext {
         return result;
     }
 
-    public final Lazy<List<JavaJarDependency>> runtimeDependencies = new Lazy<>(this::createRuntimeDependencies);
+    public final Lazy<List<JavaJarDependency>> runtimeDependencies = Lazy.of(this::createRuntimeDependencies);
     protected List<JavaJarDependency> createRuntimeDependencies() {
         List<JavaJarDependency> result = new ArrayList<>();
         for (Dependency dependency : dependencies.get()) {
@@ -580,7 +580,7 @@ public abstract class FabricContext {
         return result;
     }
 
-    public final Lazy<List<Dependency>> dependencies = new Lazy<>(this::createDependencies);
+    public final Lazy<List<Dependency>> dependencies = Lazy.of(this::createDependencies);
     protected List<Dependency> createDependencies() {
         List<Dependency> result = new ArrayList<>(mcDependencies.get());
         FabricLoader floader = getLoader();
@@ -591,7 +591,7 @@ public abstract class FabricContext {
         return result;
     }
 
-    public final Lazy<MappingTree> intermediary = new Lazy<>(this::createIntermediary);
+    public final Lazy<MappingTree> intermediary = Lazy.of(this::createIntermediary);
     protected MappingTree createIntermediary() {
         return Intermediary.ofMaven(FabricMaven.URL, FabricMaven.intermediary(versionMeta.get().version)).tree;
     }
@@ -635,7 +635,7 @@ public abstract class FabricContext {
         }
     }
 
-    public final Lazy<RemappedJar> intermediaryjar = new Lazy<>(this::createIntermediaryJar);
+    public final Lazy<RemappedJar> intermediaryjar = Lazy.of(this::createIntermediaryJar);
     protected RemappedJar createIntermediaryJar() {
             Path mergedJar = getMergedJar();
             String intermediaryHash = MappingHasher.hashSha256(intermediary.get());
@@ -649,7 +649,7 @@ public abstract class FabricContext {
             return new RemappedJar(result, intermediaryHash);
     }
 
-    public final Lazy<RemappedJar> remappedNamedJar = new Lazy<>(this::createRemappedNamedJar);
+    public final Lazy<RemappedJar> remappedNamedJar = Lazy.of(this::createRemappedNamedJar);
     protected RemappedJar createRemappedNamedJar() {
         MessageDigest md = MessageDigestUtil.messageDigest(MessageDigestUtil.SHA256);
         MessageDigestUtil.update(md, intermediaryjar.get().mappingHash);
@@ -665,7 +665,7 @@ public abstract class FabricContext {
         return new RemappedJar(result, mappingHash);
     }
 
-    public final Lazy<RemappedJar> namedJar = new Lazy<>(this::createNamedJar);
+    public final Lazy<RemappedJar> namedJar = Lazy.of(this::createNamedJar);
     protected RemappedJar createNamedJar() {
         HashableProcessor[] hps = namedJarProcessors();
         if (hps.length == 0) return remappedNamedJar.get();
@@ -697,7 +697,7 @@ public abstract class FabricContext {
         }
     }
 
-    public final Lazy<JavaJarDependency> decompiledJar = new Lazy<>(this::createDecompiledJar);
+    public final Lazy<JavaJarDependency> decompiledJar = Lazy.of(this::createDecompiledJar);
     protected JavaJarDependency createDecompiledJar() {
         RemappedJar named = namedJar.get();
         BrachyuraDecompiler decompiler = decompiler();
@@ -741,8 +741,8 @@ public abstract class FabricContext {
         return result;
     }
     
-    public final Lazy<List<JavaJarDependency>> mcClasspath = new Lazy<>(this::createMcClasspath);
-    protected final Lazy<List<Path>> mcClasspathPaths = new Lazy<>(() -> {
+    public final Lazy<List<JavaJarDependency>> mcClasspath = Lazy.of(this::createMcClasspath);
+    protected final Lazy<List<Path>> mcClasspathPaths = Lazy.of(() -> {
         ArrayList<Path> result = new ArrayList<>(mcClasspath.get().size());
         for (JavaJarDependency dep : mcClasspath.get()) {
             result.add(dep.jar);
@@ -779,7 +779,7 @@ public abstract class FabricContext {
         }
     }
 
-    public final Lazy<Path> runtimeRemapClasspath = new Lazy<>(this::createRuntimeRemapClasspath);
+    public final Lazy<Path> runtimeRemapClasspath = Lazy.of(this::createRuntimeRemapClasspath);
     protected Path createRuntimeRemapClasspath() {
         List<Path> result = new ArrayList<>();
         for (Dependency dependency : dependencies.get()) {
@@ -801,7 +801,7 @@ public abstract class FabricContext {
         return target;
     }
 
-    public final Lazy<List<Path>> extractedNatives = new Lazy<>(this::createExtractedNatives);
+    public final Lazy<List<Path>> extractedNatives = Lazy.of(this::createExtractedNatives);
     protected List<Path> createExtractedNatives() {
         List<Path> result = new ArrayList<>();
         for (Dependency dependency : mcDependencies.get()) {
@@ -820,7 +820,7 @@ public abstract class FabricContext {
         return result;
     }
 
-    public final Lazy<String> downloadedAssets = new Lazy<>(this::createDownloadedAssets);
+    public final Lazy<String> downloadedAssets = Lazy.of(this::createDownloadedAssets);
     protected String createDownloadedAssets() {
         return Minecraft.downloadAssets(versionMeta.get());
     }

@@ -56,12 +56,12 @@ public class NoMixinProjectTest {
         public Map<String, Lazy<String>> getTemplateMappingsForSources() {
             Map<String, Lazy<String>> r = new HashMap<>();
 
-            r.put("boolean", new Lazy<>(() -> "true"));
-            r.put("byte", new Lazy<>(() -> "0b00101010"));
-            r.put("short", new Lazy<>(() -> "420"));
-            r.put("int", new Lazy<>(() -> "69"));
-            r.put("long", new Lazy<>(() -> "69696969"));
-            r.put("string", new Lazy<>(() -> "Templates work."));
+            r.put("boolean", new Lazy<>("true"));
+            r.put("byte", new Lazy<>("0b00101010"));
+            r.put("short", new Lazy<>("420"));
+            r.put("int", new Lazy<>("69"));
+            r.put("long", new Lazy<>("69696969"));
+            r.put("string", new Lazy<>("Templates work."));
 
             return r;
         }
@@ -70,8 +70,8 @@ public class NoMixinProjectTest {
         public Map<String, Lazy<String>> getTemplateMappingsForResources() {
             Map<String, Lazy<String>> r = new HashMap<>();
 
-            r.put("newline", new Lazy<>(() -> "\n"));
-            r.put("hello_world", new Lazy<>(() -> "Hello World!"));
+            r.put("newline", new Lazy<>("\n"));
+            r.put("hello_world", new Lazy<>("Hello World!"));
 
             return r;
         }

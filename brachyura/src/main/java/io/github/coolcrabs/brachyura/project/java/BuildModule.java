@@ -17,9 +17,9 @@ public abstract class BuildModule {
     public abstract String getModuleName();
     public abstract Path getModuleRoot();
 
-    public final Lazy<ProcessingSource> compilationOutput = new Lazy<>(this::createCompilationOutput);
+    public final Lazy<ProcessingSource> compilationOutput = Lazy.of(this::createCompilationOutput);
     protected abstract ProcessingSource createCompilationOutput();
 
-    public final Lazy<IdeModule> ideModule = new Lazy<>(this::createIdeModule);
+    public final Lazy<IdeModule> ideModule = Lazy.of(this::createIdeModule);
     public abstract IdeModule createIdeModule();
 }

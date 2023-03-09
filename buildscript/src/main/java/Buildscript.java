@@ -38,7 +38,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 	static final String GROUP = "io.github.coolcrabs";
 
 	// https://junit.org/junit5/docs/current/user-guide/#running-tests-console-launcher
-	static final Lazy<List<JavaJarDependency>> junit = new Lazy<>(Buildscript::createJunit);
+	static final Lazy<List<JavaJarDependency>> junit = Lazy.of(Buildscript::createJunit);
 	static List<JavaJarDependency> createJunit() {
 		String jupiterVersion = "5.9.0";
 		String platformVersion = "1.9.0";
@@ -59,7 +59,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		JavaJarDependency tests;
 	}
 
-	public final Lazy<List<JavaJarDependency>> bdeps = new Lazy<>(this::createBdeps);
+	public final Lazy<List<JavaJarDependency>> bdeps = Lazy.of(this::createBdeps);
 	protected List<JavaJarDependency> createBdeps() {
 		MavenRef[] deps = {
 				new MavenRef("https://repo.maven.apache.org/maven2", "org.jetbrains", "annotations", "23.0.0"),
@@ -155,7 +155,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 			return getId().artifactId + "-" + getId().version;
 		}
 
-		public final Lazy<BJarResult> built = new Lazy<>(this::build);
+		public final Lazy<BJarResult> built = Lazy.of(this::build);
 		protected BJarResult build() {
 			Path buildLibsDir = PathUtil.resolveAndCreateDir(PathUtil.resolveAndCreateDir(getModuleRoot(), "build"), "libs");
 			Path testSrc = getModuleRoot().resolve("src").resolve("test").resolve("java");
@@ -302,7 +302,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		return bdeps.get();
 	}
 
-	Lazy<JavaJarDependency> mappingIo = new Lazy<>(() -> Maven.getMavenJarDep("https://maven.fabricmc.net/", new MavenId("net.fabricmc", "mapping-io", "0.3.0")));
+	Lazy<JavaJarDependency> mappingIo = Lazy.of(() -> Maven.getMavenJarDep("https://maven.fabricmc.net/", new MavenId("net.fabricmc", "mapping-io", "0.3.0")));
 
 	public final BJavaModule trieharder = new BJavaModule() {
 		@Override
@@ -319,7 +319,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		}
 	};
 
-	public final Lazy<JavaJarDependency> fastutil = new Lazy<>(() -> Maven.getMavenJarDep(Maven.MAVEN_CENTRAL, new MavenId("it.unimi.dsi", "fastutil", "8.5.8")));
+	public final Lazy<JavaJarDependency> fastutil = Lazy.of(() -> Maven.getMavenJarDep(Maven.MAVEN_CENTRAL, new MavenId("it.unimi.dsi", "fastutil", "8.5.8")));
 
 	public final BJavaModule fernutil = new BJavaModule() {
 		@Override
@@ -345,7 +345,7 @@ public class Buildscript extends BaseJavaProject implements BrachyuraBuildscript
 		}
 	};
 
-	public final Lazy<List<JavaJarDependency>> asm = new Lazy<>(this::createAsm);
+	public final Lazy<List<JavaJarDependency>> asm = Lazy.of(this::createAsm);
 	protected List<JavaJarDependency> createAsm() {
 		String asmGroup = "org.ow2.asm";
 		String asmVersion = "9.3";

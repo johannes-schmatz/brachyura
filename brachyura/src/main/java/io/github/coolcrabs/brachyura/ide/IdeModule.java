@@ -28,7 +28,7 @@ public class IdeModule {
             int javaVersion) {
         this.name = Objects.requireNonNull(name, "IdeModule missing name");
         this.root = Objects.requireNonNull(root, "IdeModule missing root");
-        this.dependencies = new Lazy<>(dependencies);
+        this.dependencies = Lazy.of(dependencies);
         this.dependencyModules = Objects.requireNonNull(dependencyModules);
         this.runConfigs = Objects.requireNonNull(runConfigs);
         this.sourcePaths = Objects.requireNonNull(sourcePaths);
@@ -221,9 +221,9 @@ public class IdeModule {
             this.name = Objects.requireNonNull(name, "Null name");
             this.mainClass = Objects.requireNonNull(mainClass, "Null mainClass");
             this.cwd = Objects.requireNonNull(cwd, "Null cwd");
-            this.vmArgs = new Lazy<>(vmArgs);
-            this.args = new Lazy<>(args);
-            this.classpath = new Lazy<>(classpath);
+            this.vmArgs = Lazy.of(vmArgs);
+            this.args = Lazy.of(args);
+            this.classpath = Lazy.of(classpath);
             this.additionalModulesClasspath = additionalModulesClasspath;
             this.resourcePaths = resourcePaths;
         }

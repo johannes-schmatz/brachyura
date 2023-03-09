@@ -76,7 +76,7 @@ public abstract class FabricModule extends BuildModule {
         return context.templateSourcesProcessingChain();
     }
 
-    public final Lazy<FabricCompilationResult> fabricCompilationResult = new Lazy<>(this::createFabricCompilationResult);
+    public final Lazy<FabricCompilationResult> fabricCompilationResult = Lazy.of(this::createFabricCompilationResult);
     protected FabricCompilationResult createFabricCompilationResult() {
         try {
             String mixinOut = "mixinmapout.tiny";
@@ -126,7 +126,7 @@ public abstract class FabricModule extends BuildModule {
     @Override
     public IdeModule createIdeModule() {
         Path cwd = PathUtil.resolveAndCreateDir(getModuleRoot(), "run");
-        Lazy<List<Path>> classpath = new Lazy<>(() -> {
+        Lazy<List<Path>> classpath = Lazy.of(() -> {
             Path mappingsClasspath = writeMappings4FabricStuff().getParent().getParent();
             ArrayList<Path> r = new ArrayList<>(context.runtimeDependencies.get().size() + 1);
             for (JavaJarDependency dependency : context.runtimeDependencies.get()) {

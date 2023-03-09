@@ -1,9 +1,6 @@
 package io.github.coolcrabs.brachyura.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.Supplier;
 
@@ -22,8 +19,8 @@ public final class Lazy<T> implements Supplier<T> {
         return new Lazy<>(x, Util.getCaller());
     }
 
-    public Lazy(Supplier<T> supplier) {
-        this(supplier, Util.getCaller());
+    public Lazy(T value) {
+        this(() -> value, Util.getCaller());
     }
 
     private Lazy(Supplier<T> supplier, String creator) {
@@ -71,6 +68,8 @@ public final class Lazy<T> implements Supplier<T> {
         int n = things.size();
 
         int[] slots = new int[n];
+        Arrays.fill(slots, -1);
+
         List<ForkJoinTask<T>> tasks = new ArrayList<>(n);
         List<T> results = new ArrayList<>(n);
 
@@ -91,12 +90,13 @@ public final class Lazy<T> implements Supplier<T> {
                         }
                         task = thing.task;
                         if (task == null) {
-                            task = ForkJoinTask.adapt(thing.supplier::get);
+                            task = ForkJoinTask.adapt(thing::maybeCompute);
                             task.fork();
                             thing.task = task;
                         }
                     }
                 }
+
                 results.add(null);
                 slots[ctr] = ctr;
                 tasks.add(task);
@@ -105,7 +105,11 @@ public final class Lazy<T> implements Supplier<T> {
             }
         }
         for (int i = 0; i < n; i++) {
-            results.set(slots[i], tasks.get(i).join());
+            int slot = slots[i];
+            if (slot != -1) {
+                // TODO: potential bug here: some positions don't have tasks?
+                results.set(slot, tasks.get(i).join());
+            }
         }
         return results;
     }

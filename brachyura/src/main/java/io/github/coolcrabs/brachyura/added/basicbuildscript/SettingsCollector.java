@@ -117,7 +117,7 @@ public class SettingsCollector {
 		templateMap.put(key, value);
 	}
 	public void templateMap(String key, String value) {
-		templateMap.put(key, new Lazy<>(() -> value));
+		templateMap.put(key, new Lazy<>(value));
 	}
 
 	// helper methods
